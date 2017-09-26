@@ -1,16 +1,25 @@
 //
-//  main.c
+//  testprog.c
 //  Testing module communication
 //
-//  Created on 05/09/17.
+//  Created on 21/09/17.
 //
+//  BRUNO AUGUSTO PEDROSO        12662136
+//  GIULIANA SALGADO ALEPROTI    12120457
+//  MATHEUS DE PAULA NICOLAU     12085957
+//  ROGER OBA                    12048534
 
-#include <stdio.h> // I/O
+#include <stdio.h>  // I/O
+#include <unistd.h> // open/write/read functions
 #include <stdlib.h> // System()
 #include <string.h> // String manipulation
+#include <errno.h>  // Supplies the error number
+#include <fcntl.h>  // File management
 
 static const int BGMR_OPTION_MAX_BUFFER = 1024;
 static const int BGMR_SENTENCE_MAX_BUFFER = 1024;
+//static char stringRead[BUFFER_LENGTH]; ///< The receive buffer from the LKM
+static int deviceDescriptor; // A file descriptor for the crypto device
 
 char *encrypted(char *sentence);
 char *decrypted(char *sentence);
@@ -20,6 +29,28 @@ char quitWithError();
 int main(int argc, const char * argv[]) {
     system("clear");
     printf("Welcome to the Crypto Device - Your Guaranteed Encryption\n");
+
+    ssize_t ret;
+    printf("\nStarting crypto device. . .\n");
+    deviceDescriptor = open("/dev/crypto", O_RDWR); // Open the device with read/write access
+    if (deviceDescriptor < 0) {
+        perror("Failed to open the crypto device...");
+        return errno;
+    }
+
+//    printf("Press ENTER to read back from the device...\n");
+//    getchar();
+//
+//    printf("Reading from the device...\n");
+//    ret = read(deviceDescriptor, receive, BUFFER_LENGTH);        // Read the response from the LKM
+//    if (ret < 0) {
+//        perror("Failed to read the message from the device.");
+//        return errno;
+//    }
+//    printf("The received message is: [%s]\n", receive);
+//    printf("End of the program\n");
+//    return 0;
+
     char option = 'm'; // Default option
     while (option != 'q') {
         printf("\nPress c to cypher, d to decypher, h to hash, q to quit. Type: \n");
@@ -30,6 +61,8 @@ int main(int argc, const char * argv[]) {
                 char sentence[BGMR_SENTENCE_MAX_BUFFER];
                 if (option == 'c') {
                     printf("\nType what you want to cypher: ");
+//                    scanf("%[^\n]%*c", sentence); // Read in a string (with spaces)
+//                    printf("Read sentence from input: [%s].\n", sentence);
                     if (fgets(sentence, sizeof(sentence), stdin)) {
                         char encryptedSentence[sizeof(sentence)];
                         strcpy(encryptedSentence, encrypted(sentence));
@@ -37,6 +70,8 @@ int main(int argc, const char * argv[]) {
                     }
                 } else if (option == 'd') {
                     printf("\nType what you want to decypher: ");
+//                    scanf("%[^\n]%*c", sentence); // Read in a string (with spaces)
+//                    printf("Read sentence from input: [%s].\n", sentence);
                     if (fgets(sentence, sizeof(sentence), stdin)) {
                         char decryptedSentence[sizeof(sentence)];
                         strcpy(decryptedSentence, decrypted(sentence));
@@ -44,6 +79,8 @@ int main(int argc, const char * argv[]) {
                     }
                 } else if (option == 'h') {
                     printf("\nType what you want to hash: ");
+//                    scanf("%[^\n]%*c", sentence); // Read in a string (with spaces)
+//                    printf("Read sentence from input: [%s].\n", sentence);[
                     if (fgets(sentence, sizeof(sentence), stdin)) {
                         char hashedSentence[sizeof(sentence)];
                         strcpy(hashedSentence, hashValue(sentence));
@@ -63,10 +100,22 @@ int main(int argc, const char * argv[]) {
             option = quitWithError();
         }
     }
+    ret = close(deviceDescriptor);
+    if (ret < 0) {
+        perror("Failed to close the crypto device.");
+        return errno;
+    }
     return 0;
 }
 
 char *encrypted(char *sentence) {
+    ssize_t ret = write(deviceDescriptor, sentence, strlen(sentence)); // Write the string to the crypto device
+    if (ret < 0) {
+        perror("Failed to write the message to the crypto device.");
+        return errno;
+    }
+
+
 //    bgmr_cypher(sentence);
 //    return bgmr_read();
     return "encryption sample";
@@ -86,6 +135,6 @@ char *hashValue(char *sentence) {
 
 char quitWithError() {
     system("clear");
-    printf("\nUnexpected input. Quitting . . . \n");
+    perror("\nUnexpected user input. Quitting . . . \n");
     return 'q';
 }
