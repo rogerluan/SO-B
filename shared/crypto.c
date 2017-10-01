@@ -21,7 +21,7 @@
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
 #define BUFFER_SIZE 2048
 
-MODULE_LICENSE("MIT");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Bruno Augusto Pedroso\t\t12662136\nGiuliana Salgado Aleproti\t12120457\nMatheus de Paula Nicolau\t12085957\nRoger Oba\t\t\t\t\t12048534");
 MODULE_DESCRIPTION("A character device that cypher, decypher and hash strings.");
 MODULE_VERSION("1.0");
@@ -29,7 +29,7 @@ MODULE_VERSION("1.0");
 // Parameters
 static char *key = "alpine";
 //module_param(key, charp, 0000); // Compatible with kernel 3.2.36
-module_param(key, "s"); // Compatible with kernel 4+
+module_param(key, charp, 0); // Compatible with kernel 4+
 MODULE_PARM_DESC(key, "This is the symetric key used to cypher and decypher de data.");
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
