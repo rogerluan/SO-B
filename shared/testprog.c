@@ -32,7 +32,7 @@ int main(int argc, const char * argv[]) {
 
     ssize_t ret;
     printf("\nStarting crypto device. . .\n");
-    deviceDescriptor = open("/dev/crypto", O_RDWR); // Open the device with read/write access
+    deviceDescriptor = open("/dev/cryptochar", O_RDWR); // Open the device with read/write access
     if (deviceDescriptor < 0) {
         perror("Failed to open the crypto device...");
         return errno;
@@ -65,8 +65,12 @@ int main(int argc, const char * argv[]) {
 //                    printf("Read sentence from input: [%s].\n", sentence);
                     if (fgets(sentence, sizeof(sentence), stdin)) {
                         char encryptedSentence[sizeof(sentence)];
-                        strcpy(encryptedSentence, encrypted(sentence));
+			char sentenceToKernel[100];
+			sprintf(sentenceToKernel, "%c %s",option,sentence);
+			printf("sentenceToKernel: %s\n",sentenceToKernel);
+                        strcpy(encryptedSentence, encrypted(sentenceToKernel));
                         printf("\nEncrypted sentence: %s", encryptedSentence);
+
                     }
                 } else if (option == 'd') {
                     printf("\nType what you want to decypher: ");

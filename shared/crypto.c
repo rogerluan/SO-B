@@ -170,7 +170,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     strcpy(message, sentence);
     size_of_message = strlen(message);
 
-    printk(KERN_INFO "CryptoDevice: Received %zu characters from the user\n", len);
+    printk(KERN_INFO "CryptoDevice: Received %zu characters from the user with the data %s...", len,sentence);
     return len;
 }
 
