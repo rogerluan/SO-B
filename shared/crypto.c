@@ -268,7 +268,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         goto out;
     }
     
-    skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG, test_skcipher_cb, &sk.result);
+    skcipher_request_set_callback(req, 0, test_skcipher_cb, &sk.result);
     
     /* AES 256 with random key */
     if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
