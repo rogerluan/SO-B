@@ -249,7 +249,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_def sk;
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
-    char *ivdata = NULL;
+//    char *ivdata = NULL;
     int ret = -EFAULT;
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
@@ -274,20 +274,20 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         goto out;
     }
     
-    /* IV will be random */
-    ivdata = kmalloc(16, GFP_KERNEL);
-    if (!ivdata) {
-        pr_info("could not allocate ivdata\n");
-        goto out;
-    }
-    get_random_bytes(ivdata, 16);
+//    /* IV will be random */
+//    ivdata = kmalloc(16, GFP_KERNEL);
+//    if (!ivdata) {
+//        pr_info("could not allocate ivdata\n");
+//        goto out;
+//    }
+//    get_random_bytes(ivdata, 16);
 
     sk.tfm = skcipher;
     sk.req = req;
     
     /* We encrypt one block */
     sg_init_one(&sk.sg, sentence, 16);
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, ivdata);
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "1234567890123456");
     init_completion(&sk.result.completion);
     
     /* encrypt data */
