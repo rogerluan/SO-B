@@ -161,10 +161,11 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     if (operation == 'c') {
         // TODO: cypher message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Cypher\n");
-
+        bgmr_cipher(sentence, 1);
     } else if (operation == 'd') {
         // TODO: decypher message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Decypher\n");
+        bgmr_cipher(sentence, 0);
     } else if (operation == 'h') {
         // TODO: hash message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Hash\n");
@@ -249,7 +250,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_def sk;
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
-    char *scratchpad = NULL;
     char *ivdata = NULL;
     int ret = -EFAULT;
     
