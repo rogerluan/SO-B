@@ -16,9 +16,10 @@
 #include <linux/fs.h>             // Header for the Linux file system support
 #include <asm/uaccess.h>          // Required for the copy to user function
 #include <linux/string.h>         // String manipulation
-#include <linux/crypto.h>       // crypto_async_request definition
-#include <linux/scatterlist.h>  // scatterlist struct definition
-#include <crypto/skcipher.h>     // crypto_skcipher_encrypt definition
+#include <linux/crypto.h>         // crypto_async_request definition
+#include <linux/scatterlist.h>    // scatterlist struct definition
+#include <crypto/skcipher.h>      // crypto_skcipher_encrypt definition
+#include <linux/random.h>         // random function declarations
 
 
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
