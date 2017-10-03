@@ -17,6 +17,7 @@
 #include <asm/uaccess.h>          // Required for the copy to user function
 #include <linux/string.h>         // String manipulation
 //#include <linux/crypto.h>
+#include <linux/scatterlist.h>  // scatterlist struct definition
 
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
