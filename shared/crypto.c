@@ -172,10 +172,6 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
         printk(KERN_INFO "CryptoDevice: Failed to parse the operation: %s\n", buffer);
         return 0;
     }
-
-    strcpy(message, sentence);
-    size_of_message = strlen(message);
-
     printk(KERN_INFO "CryptoDevice: Received %zu characters from the user with the data %s...\n", len, sentence);
     return len;
 }
@@ -213,6 +209,9 @@ static void test_skcipher_cb(struct crypto_async_request *req, int error) {
     if (error == -EINPROGRESS) { return; }
     result->err = error;
     complete(&result->completion);
+
+    strcpy(message, result);
+    size_of_message = strlen(message);
     pr_info("Encryption finished successfully\n");
 }
 
@@ -286,7 +285,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.req = req;
     
     /* We encrypt one block */
-    sg_init_one(&sk.sg, sentence, 16);
+    sg_init_one(&sk.sg, "rogerluankenjida", 16);
     skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "1234567890123456");
     init_completion(&sk.result.completion);
     
@@ -303,8 +302,8 @@ out:
     if (req) {
         skcipher_request_free(req);
     }
-    if (ivdata) {
-        kfree(ivdata);
-    }
+//    if (ivdata) {
+//        kfree(ivdata);
+//    }
     return ret;
 }
