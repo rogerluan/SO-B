@@ -16,7 +16,7 @@
 #include <linux/fs.h>             // Header for the Linux file system support
 #include <asm/uaccess.h>          // Required for the copy to user function
 #include <linux/string.h>         // String manipulation
-#include <linux/crypto.h>
+//#include <linux/crypto.h>
 
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
@@ -183,6 +183,10 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 module_init(init_crypto);
 module_exit(exit_crypto);
 
+
+
+
+
 // MARK: Crypto Methods
 
 struct sdesc {
@@ -253,19 +257,16 @@ static unsigned int test_skcipher_encdec(struct skcipher_def *sk, int enc) {
     }
     
     switch (rc) {
-        case 0:
-            break;
+        case 0: break;
         case -EINPROGRESS:
         case -EBUSY:
-            rc = wait_for_completion_interruptible(
-                                                   &sk->result.completion);
+            rc = wait_for_completion_interruptible(&sk->result.completion);
             if (!rc && !sk->result.err) {
                 reinit_completion(&sk->result.completion);
                 break;
             }
         default:
-            pr_info("skcipher encrypt returned with %d result %d\n",
-                    rc, sk->result.err);
+            pr_info("skcipher encrypt returned with %d result %d\n", rc, sk->result.err);
             break;
     }
     init_completion(&sk->result.completion);
@@ -274,17 +275,15 @@ static unsigned int test_skcipher_encdec(struct skcipher_def *sk, int enc) {
 }
 
 /* Initialize and trigger cipher operation */
-static int test_skcipher(void)
-{
+static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_def sk;
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
     char *scratchpad = NULL;
     char *ivdata = NULL;
-    unsigned char key[32];
     int ret = -EFAULT;
     
-    skcipher = crypto_alloc_skcipher("cbc-aes-aesni", 0, 0);
+    skcipher = crypto_alloc_skcipher("aes", 0, 0);
     if (IS_ERR(skcipher)) {
         pr_info("could not allocate skcipher handle\n");
         return PTR_ERR(skcipher);
@@ -297,13 +296,10 @@ static int test_skcipher(void)
         goto out;
     }
     
-    skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-                                  test_skcipher_cb,
-                                  &sk.result);
+    skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG, test_skcipher_cb, &sk.result);
     
     /* AES 256 with random key */
-    get_random_bytes(&key, 32);
-    if (crypto_skcipher_setkey(skcipher, key, 32)) {
+    if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
         pr_info("key could not be set\n");
         ret = -EAGAIN;
         goto out;
@@ -316,38 +312,30 @@ static int test_skcipher(void)
         goto out;
     }
     get_random_bytes(ivdata, 16);
-    
-    /* Input data will be random */
-    scratchpad = kmalloc(16, GFP_KERNEL);
-    if (!scratchpad) {
-        pr_info("could not allocate scratchpad\n");
-        goto out;
-    }
-    get_random_bytes(scratchpad, 16);
-    
+
     sk.tfm = skcipher;
     sk.req = req;
     
     /* We encrypt one block */
-    sg_init_one(&sk.sg, scratchpad, 16);
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, ivdata);
+    sg_init_one(&sk.sg, sentence, strlen(sentence));
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(sentence), ivdata);
     init_completion(&sk.result.completion);
     
     /* encrypt data */
-    ret = test_skcipher_encdec(&sk, 1);
-    if (ret)
-        goto out;
+    ret = test_skcipher_encdec(&sk, encrypt);
+    if (ret) { goto out; }
     
     pr_info("Encryption triggered successfully\n");
     
 out:
-    if (skcipher)
+    if (skcipher) {
         crypto_free_skcipher(skcipher);
-    if (req)
+    }
+    if (req) {
         skcipher_request_free(req);
-    if (ivdata)
+    }
+    if (ivdata) {
         kfree(ivdata);
-    if (scratchpad)
-        kfree(scratchpad);
+    }
     return ret;
 }
