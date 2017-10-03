@@ -160,11 +160,9 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     }
 
     if (operation == 'c') {
-        // TODO: cypher message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Cypher\n");
         bgmr_cipher(sentence, 1);
     } else if (operation == 'd') {
-        // TODO: decypher message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Decypher\n");
         bgmr_cipher(sentence, 0);
     } else if (operation == 'h') {
@@ -270,6 +268,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG, test_skcipher_cb, &sk.result);
     
     /* AES 256 with random key */
+    pr_info("Trying to set the key = %s", key);
     if (crypto_skcipher_setkey(skcipher, key, 4)) {
         pr_info("key could not be set\n");
         ret = -EAGAIN;
