@@ -18,7 +18,7 @@
 #include <linux/string.h>         // String manipulation
 #include <linux/crypto.h>       // crypto_async_request definition
 #include <linux/scatterlist.h>  // scatterlist struct definition
-#include <linux/skcipher.h>     // crypto_skcipher_encrypt definition
+#include <crypto/skcipher.h>     // crypto_skcipher_encrypt definition
 
 
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
