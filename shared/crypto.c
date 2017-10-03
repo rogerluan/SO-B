@@ -18,6 +18,8 @@
 #include <linux/string.h>         // String manipulation
 #include <linux/crypto.h>       // crypto_async_request definition
 #include <linux/scatterlist.h>  // scatterlist struct definition
+#include <linux/skcipher.h>     // crypto_skcipher_encrypt definition
+
 
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
@@ -250,7 +252,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     char *ivdata = NULL;
     int ret = -EFAULT;
     
-    skcipher = crypto_alloc_skcipher("aes", 0, 0);
+    skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
         pr_info("could not allocate skcipher handle\n");
         return PTR_ERR(skcipher);
