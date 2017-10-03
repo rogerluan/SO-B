@@ -251,8 +251,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_request *req = NULL;
     char *ivdata = NULL;
     int ret = -EFAULT;
-    char *scratchpad = NULL;
-    sprintf(scratchpad, "%s", sentence);
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
@@ -288,10 +286,8 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.req = req;
     
     /* We encrypt one block */
-    sg_init_one(&sk.sg, scratchpad, strlen(scratchpad));
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(scratchpad), ivdata);
-//    sg_init_one(&sk.sg, sentence, strlen(sentence));
-//    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(sentence), ivdata);
+    sg_init_one(&sk.sg, sentence, strlen(sentence));
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(sentence), ivdata);
     init_completion(&sk.result.completion);
     
     /* encrypt data */
