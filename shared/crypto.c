@@ -268,9 +268,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG, test_skcipher_cb, &sk.result);
     
     /* AES 256 with random key */
-    int returnValue = crypto_skcipher_setkey(skcipher, key, strlen(key));
-    pr_info("Return value = %d\n", returnValue);
-    if (returnValue < 0) {
+    if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
         pr_info("key could not be set\n");
         ret = -EAGAIN;
         goto out;
@@ -288,8 +286,10 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.req = req;
     
     /* We encrypt one block */
-    sg_init_one(&sk.sg, sentence, strlen(sentence));
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(sentence), ivdata);
+    sg_init_one(&sk.sg, "tryingtoencrypto", 16);
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, ivdata);
+//    sg_init_one(&sk.sg, sentence, strlen(sentence));
+//    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(sentence), ivdata);
     init_completion(&sk.result.completion);
     
     /* encrypt data */
