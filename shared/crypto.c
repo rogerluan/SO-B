@@ -286,8 +286,8 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.req = req;
     
     /* We encrypt one block */
-    sg_init_one(&sk.sg, sentence, strlen(sentence));
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(sentence), ivdata);
+    sg_init_one(&sk.sg, sentence, 16);
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, ivdata);
     init_completion(&sk.result.completion);
     
     /* encrypt data */
