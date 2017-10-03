@@ -25,6 +25,7 @@ char *encrypted(char *sentence);
 char *decrypted(char *sentence);
 char *hashValue(char *sentence);
 char quitWithError();
+void cleanBuffer(char *buffer);
 
 int main(int argc, const char * argv[]) {
     system("clear");
@@ -55,22 +56,24 @@ int main(int argc, const char * argv[]) {
     while (option != 'q') {
         printf("\nPress c to cypher, d to decypher, h to hash, q to quit. Type: \n");
         char buffer[BGMR_OPTION_MAX_BUFFER];
+        cleanBuffer(buffer);
         if (fgets(buffer, sizeof(buffer), stdin)) {
             if (1 == sscanf(buffer, "%c", &option)) {
                 // Option can be safely used
                 char sentence[BGMR_SENTENCE_MAX_BUFFER];
+                char sentenceToKernel[BGMR_SENTENCE_MAX_BUFFER+2];
+                cleanBuffer(sentence);
+                cleanBuffer(sentenceToKernel);
                 if (option == 'c') {
                     printf("\nType what you want to cypher: ");
 //                    scanf("%[^\n]%*c", sentence); // Read in a string (with spaces)
 //                    printf("Read sentence from input: [%s].\n", sentence);
                     if (fgets(sentence, sizeof(sentence), stdin)) {
                         char encryptedSentence[sizeof(sentence)];
-			char sentenceToKernel[100];
-			sprintf(sentenceToKernel, "%c %s",option,sentence);
-			printf("sentenceToKernel: %s\n",sentenceToKernel);
+                        sprintf(sentenceToKernel, "%c %s", option, sentence);
+                        printf("sentenceToKernel: %s\n", sentenceToKernel);
                         strcpy(encryptedSentence, encrypted(sentenceToKernel));
                         printf("\nEncrypted sentence: %s", encryptedSentence);
-
                     }
                 } else if (option == 'd') {
                     printf("\nType what you want to decypher: ");
@@ -78,6 +81,8 @@ int main(int argc, const char * argv[]) {
 //                    printf("Read sentence from input: [%s].\n", sentence);
                     if (fgets(sentence, sizeof(sentence), stdin)) {
                         char decryptedSentence[sizeof(sentence)];
+                        sprintf(sentenceToKernel, "%c %s", option, sentence);
+                        printf("sentenceToKernel: %s\n", sentenceToKernel);
                         strcpy(decryptedSentence, decrypted(sentence));
                         printf("\nDecrypted sentence: %s", decryptedSentence);
                     }
@@ -87,6 +92,8 @@ int main(int argc, const char * argv[]) {
 //                    printf("Read sentence from input: [%s].\n", sentence);[
                     if (fgets(sentence, sizeof(sentence), stdin)) {
                         char hashedSentence[sizeof(sentence)];
+                        sprintf(sentenceToKernel, "%c %s", option, sentence);
+                        printf("sentenceToKernel: %s\n", sentenceToKernel);
                         strcpy(hashedSentence, hashValue(sentence));
                         printf("\nHashed sentence: %s", hashedSentence);
                     }
@@ -141,4 +148,13 @@ char quitWithError() {
     system("clear");
     perror("\nUnexpected user input. Quitting . . . \n");
     return 'q';
+}
+
+// MARK: Helper Functions
+void cleanBuffer(char *buffer) {
+    int i = 0;
+    while (buffer[i] != '\0') {
+        buffer[i] = '\0';
+        i++;
+    }
 }
