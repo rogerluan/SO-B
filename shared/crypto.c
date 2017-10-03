@@ -16,6 +16,7 @@
 #include <linux/fs.h>             // Header for the Linux file system support
 #include <asm/uaccess.h>          // Required for the copy to user function
 #include <linux/string.h>         // String manipulation
+#include <linux/crypto.h>
 
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
@@ -232,27 +233,24 @@ struct skcipher_def {
 };
 
 /* Callback function */
-static void test_skcipher_cb(struct crypto_async_request *req, int error)
-{
+static void test_skcipher_cb(struct crypto_async_request *req, int error) {
     struct tcrypt_result *result = req->data;
     
-    if (error == -EINPROGRESS)
-        return;
+    if (error == -EINPROGRESS) { return; }
     result->err = error;
     complete(&result->completion);
     pr_info("Encryption finished successfully\n");
 }
 
 /* Perform cipher operation */
-static unsigned int test_skcipher_encdec(struct skcipher_def *sk,
-                                         int enc)
-{
+static unsigned int test_skcipher_encdec(struct skcipher_def *sk, int enc) {
     int rc = 0;
     
-    if (enc)
+    if (enc) {
         rc = crypto_skcipher_encrypt(sk->req);
-    else
+    } else {
         rc = crypto_skcipher_decrypt(sk->req);
+    }
     
     switch (rc) {
         case 0:
