@@ -210,7 +210,7 @@ static void test_skcipher_cb(struct crypto_async_request *req, int error) {
     result->err = error;
     complete(&result->completion);
 
-    strcpy(message, result);
+    strcpy(message, req->data);
     size_of_message = strlen(message);
     pr_info("Encryption finished successfully\n");
 }
