@@ -46,7 +46,7 @@ static struct device* cryptocharDevice = NULL; ///< The device-driver device str
 // The prototype functions for the character driver -- must come before the struct definition
 static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
 static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
-static int bgmr_cipher(char **sentence, int encrypt);
+static int bgmr_cipher(char *sentence, int encrypt);
 
 /** @brief Devices are represented as file structure in the kernel. The file_operations structure from
  *  /linux/fs.h lists the callback functions that you wish to associated with your file operations
@@ -162,11 +162,11 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     if (operation == 'c') {
         // TODO: cypher message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Cypher\n");
-        bgmr_cipher(&sentence, 1);
+        bgmr_cipher(sentence, 1);
     } else if (operation == 'd') {
         // TODO: decypher message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Decypher\n");
-        bgmr_cipher(&sentence, 0);
+        bgmr_cipher(sentence, 0);
     } else if (operation == 'h') {
         // TODO: hash message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Hash\n");
@@ -247,7 +247,7 @@ static unsigned int test_skcipher_encdec(struct skcipher_def *sk, int enc) {
 }
 
 /* Initialize and trigger cipher operation */
-static int bgmr_cipher(char **sentence, int encrypt) {
+static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_def sk;
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
@@ -270,7 +270,7 @@ static int bgmr_cipher(char **sentence, int encrypt) {
     skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG, test_skcipher_cb, &sk.result);
     
     /* AES 256 with random key */
-    if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
+    if (crypto_skcipher_setkey(skcipher, key, 4)) {
         pr_info("key could not be set\n");
         ret = -EAGAIN;
         goto out;
@@ -288,8 +288,8 @@ static int bgmr_cipher(char **sentence, int encrypt) {
     sk.req = req;
     
     /* We encrypt one block */
-    sg_init_one(&sk.sg, *sentence, strlen(*sentence));
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(*sentence), ivdata);
+    sg_init_one(&sk.sg, sentence, strlen(sentence));
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, strlen(sentence), ivdata);
     init_completion(&sk.result.completion);
     
     /* encrypt data */
