@@ -204,9 +204,13 @@ struct skcipher_def {
 
 /* Callback function */
 static void test_skcipher_cb(struct crypto_async_request *req, int error) {
+    pr_info("Callback called\n");
     struct tcrypt_result *result = req->data;
-    
-    if (error == -EINPROGRESS) { return; }
+
+    if (error == -EINPROGRESS) {
+        pr_info("Encryption is still under progress. Returning... \n");
+        return;
+    }
     result->err = error;
 
     strcpy(message, req->data);
