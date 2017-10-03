@@ -46,6 +46,7 @@ static struct device* cryptocharDevice = NULL; ///< The device-driver device str
 // The prototype functions for the character driver -- must come before the struct definition
 static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
 static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
+static int bgmr_cipher(char *sentence, int encrypt);
 
 /** @brief Devices are represented as file structure in the kernel. The file_operations structure from
  *  /linux/fs.h lists the callback functions that you wish to associated with your file operations
