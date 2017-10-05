@@ -24,7 +24,7 @@
 
 /* Begin PBXFileReference section */
 		C5ECB5A71F7A9F1500515BE7 /* CryptoDevice */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CryptoDevice; sourceTree = BUILT_PRODUCTS_DIR; };
-		C5ECB5AA1F7A9F1500515BE7 /* crypto.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = crypto.c; path = ../../../shared/crypto.c; sourceTree = "<group>"; };
+		C5ECB5AA1F7A9F1500515BE7 /* crypto.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = crypto.c; path = ../../shared/crypto.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,7 +59,7 @@
 			children = (
 				C5ECB5AA1F7A9F1500515BE7 /* crypto.c */,
 			);
-			path = CryptoDevice;
+			name = CryptoDevice;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

@@ -252,7 +252,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_def sk;
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
-//    char *ivdata = NULL;
     int ret = -EFAULT;
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
@@ -269,36 +268,35 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     }
     
     skcipher_request_set_callback(req, 0, test_skcipher_cb, &message);
-    
-    /* AES 256 with random key */
+
     if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
         pr_info("key could not be set\n");
         ret = -EAGAIN;
         goto out;
     }
-    
-//    /* IV will be random */
-//    ivdata = kmalloc(16, GFP_KERNEL);
-//    if (!ivdata) {
-//        pr_info("could not allocate ivdata\n");
-//        goto out;
-//    }
-//    get_random_bytes(ivdata, 16);
 
     sk.tfm = skcipher;
     sk.req = req;
-    
-    /* We encrypt one block */
-    sg_init_one(&sk.sg, "rogerluankenjida", 16);
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "1234567890123456");
-    init_completion(&sk.result.completion);
-    
-    /* encrypt data */
-    ret = test_skcipher_encdec(&sk, encrypt);
-    if (ret) { goto out; }
-    
+
+    sentence[i];
+    int i = 0;
+    int sentenceLength = strlen(sentence);
+    int numberOfBlocks = ceil(sentenceLength/16);
+    for (i; i < sentenceLength; i) {
+        sg_init_one(&sk.sg, sentence[i*16], 16);
+        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
+        init_completion(&sk.result.completion);
+
+        /* Encrypt Data */
+        ret = test_skcipher_encdec(&sk, encrypt);
+        if (ret) { goto out; }
+
+        pr_info("Encrypted %ld/%ld \n", (long)i+1, (long)numberOfBlocks);
+
+        sg_copy_to_buffer(&sk.sg, 1, message[i*16], 16); // TODO: copy while number of bytes copied < total bytes
+    }
+
     pr_info("Encryption triggered successfully\n");
-    
 out:
     if (skcipher) {
         crypto_free_skcipher(skcipher);
@@ -306,8 +304,5 @@ out:
     if (req) {
         skcipher_request_free(req);
     }
-//    if (ivdata) {
-//        kfree(ivdata);
-//    }
     return ret;
 }
