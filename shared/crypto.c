@@ -21,10 +21,12 @@
 #include <crypto/skcipher.h>      // crypto_skcipher_encrypt definition
 #include <linux/random.h>         // random function declarations
 
-
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
 #define BUFFER_SIZE 2048
+
+#define ceil(x, y) \
+({ unsigned long __x = (x), __y = (y); (__x + __y - 1) / __y; })
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Bruno Augusto Pedroso\t\t12662136\nGiuliana Salgado Aleproti\t12120457\nMatheus de Paula Nicolau\t12085957\nRoger Oba\t\t\t\t\t12048534");
@@ -204,7 +206,6 @@ struct skcipher_def {
 
 /* Callback function */
 static void test_skcipher_cb(struct crypto_async_request *req, int error) {
-    pr_info("Callback called\n");
     struct tcrypt_result *result = req->data;
 
     if (error == -EINPROGRESS) {
@@ -212,9 +213,6 @@ static void test_skcipher_cb(struct crypto_async_request *req, int error) {
         return;
     }
     result->err = error;
-
-    strcpy(message, req->data);
-    size_of_message = strlen(message);
     pr_info("Encryption finished successfully\n");
     complete(&result->completion);
 }
@@ -279,10 +277,10 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.req = req;
 
     sentence[i];
-    int i = 0;
+    int i;
     int sentenceLength = strlen(sentence);
     int numberOfBlocks = ceil(sentenceLength/16);
-    for (i; i < sentenceLength; i) {
+    for (i = 0; i < sentenceLength; i) {
         sg_init_one(&sk.sg, sentence[i*16], 16);
         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
         init_completion(&sk.result.completion);
