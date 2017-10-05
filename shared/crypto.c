@@ -25,9 +25,6 @@
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
 #define BUFFER_SIZE 2048
 
-#define ceil(x, y) \
-({ unsigned long __x = (x), __y = (y); (__x + __y - 1) / __y; })
-
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Bruno Augusto Pedroso\t\t12662136\nGiuliana Salgado Aleproti\t12120457\nMatheus de Paula Nicolau\t12085957\nRoger Oba\t\t\t\t\t12048534");
 MODULE_DESCRIPTION("A character device that cypher, decypher and hash strings.");
@@ -279,7 +276,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sentence[i];
     int i;
     int sentenceLength = strlen(sentence);
-    int numberOfBlocks = ceil(sentenceLength/16);
+    int numberOfBlocks = sentenceLength % 1 == 0 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is alwaus >= 0
     for (i = 0; i < sentenceLength; i) {
         sg_init_one(&sk.sg, sentence[i*16], 16);
         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
@@ -291,7 +288,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
         pr_info("Encrypted %ld/%ld \n", (long)i+1, (long)numberOfBlocks);
 
-        sg_copy_to_buffer(&sk.sg, 1, message[i*16], 16); // TODO: copy while number of bytes copied < total bytes
+        sg_copy_to_buffer(&sk.sg, 1, &message[i*16], 16); // TODO: copy while number of bytes copied < total bytes
     }
 
     pr_info("Encryption triggered successfully\n");
