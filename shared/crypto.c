@@ -273,11 +273,10 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.tfm = skcipher;
     sk.req = req;
 
-    sentence[i];
     int i;
     int sentenceLength = strlen(sentence);
     int numberOfBlocks = sentenceLength % 1 == 0 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is alwaus >= 0
-    for (i = 0; i < sentenceLength; i) {
+    for (i = 0; i < sentenceLength; i++) {
         sg_init_one(&sk.sg, sentence[i*16], 16);
         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
         init_completion(&sk.result.completion);
