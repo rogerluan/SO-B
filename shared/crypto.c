@@ -273,22 +273,33 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.tfm = skcipher;
     sk.req = req;
 
-    int i;
-    int sentenceLength = strlen(sentence);
-    int numberOfBlocks = sentenceLength % 1 == 0 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is alwaus >= 0
-    for (i = 0; i < sentenceLength; i++) {
-        sg_init_one(&sk.sg, sentence[i*16], 16);
-        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
-        init_completion(&sk.result.completion);
+//    int i;
+//    int sentenceLength = strlen(sentence);
+//    int numberOfBlocks = sentenceLength % 1 == 0 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is alwaus >= 0
+//    for (i = 0; i < sentenceLength; i++) {
+//        sg_init_one(&sk.sg, sentence[i*16], 16);
+//        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
+//        init_completion(&sk.result.completion);
+//
+//        /* Encrypt Data */
+//        ret = test_skcipher_encdec(&sk, encrypt);
+//        if (ret) { goto out; }
+//
+//        pr_info("Encrypted %ld/%ld \n", (long)i+1, (long)numberOfBlocks);
+//
+//        sg_copy_to_buffer(&sk.sg, 1, &message[i*16], 16); // TODO: copy while number of bytes copied < total bytes
+//    }
 
-        /* Encrypt Data */
-        ret = test_skcipher_encdec(&sk, encrypt);
-        if (ret) { goto out; }
+    sg_init_one(&sk.sg, "rogerluankenjida", 16);
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
+    init_completion(&sk.result.completion);
 
-        pr_info("Encrypted %ld/%ld \n", (long)i+1, (long)numberOfBlocks);
+    /* Encrypt Data */
+    ret = test_skcipher_encdec(&sk, encrypt);
+    if (ret) { goto out; }
 
-        sg_copy_to_buffer(&sk.sg, 1, &message[i*16], 16); // TODO: copy while number of bytes copied < total bytes
-    }
+    char encryptedSentence[16];
+    sg_copy_to_buffer(&sk.sg, 1, &encryptedSentence, 16); // TODO: copy while number of bytes copied < total bytes
 
     pr_info("Encryption triggered successfully\n");
 out:
