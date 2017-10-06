@@ -292,7 +292,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         int rest = sentenceLength % 16;
         int i;
         for (i = rest; i < 16; ++i) {
-            sentence[((blockCount-1)*16)+rest] = ' ';
+            sentence[((blockCount-1)*16)+i] = ' ';
         }
     }
 
