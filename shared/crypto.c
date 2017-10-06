@@ -248,6 +248,11 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
     int ret = -EFAULT;
+    char encryptedSentence[16];
+
+    for (int i = 0; i < 16; ++i) {
+        encryptedSentence[i] = '\0';
+    }
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
@@ -298,7 +303,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     ret = test_skcipher_encdec(&sk, encrypt);
     if (ret) { goto out; }
 
-    char encryptedSentence[16];
     sg_copy_to_buffer(&sk.sg, 1, &encryptedSentence, 16); // TODO: copy while number of bytes copied < total bytes
 
     pr_info("Encryption triggered successfully. Encrypted: %s\n", encryptedSentence);
