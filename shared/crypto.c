@@ -307,7 +307,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     sg_copy_to_buffer(&sk.sg, 1, &sentence, 16); // TODO: copy while number of bytes copied < total bytes
 
-    pr_info("Encryption triggered successfully. Encrypted: %s\n", [encryptedSentence]);
+    pr_info("Encryption triggered successfully. Encrypted: %s\n", encryptedSentence);
 out:
     if (skcipher) {
         crypto_free_skcipher(skcipher);
