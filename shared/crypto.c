@@ -94,11 +94,11 @@ static int __init init_crypto(void) {
 
     printk(KERN_INFO "CryptoDevice: The key is: %s\n", key);
 
-//    int j;
-//    int messageSize = strlen(message);
-//    for (j = 0; j < messageSize; ++j) {
-//        message[j] = '\0';
-//    }
+    int j;
+    int messageSize = strlen(message);
+    for (j = 0; j < messageSize; ++j) {
+        message[j] = '\0';
+    }
 
     return 0;
 }
@@ -130,7 +130,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
     errorCount = copy_to_user(buffer, message, messageLength);
 
     if (errorCount==0) {            // if true then have success
-        printk(KERN_INFO "CryptoDevice: Sent %d characters to the user\n", messageLength);
+        printk(KERN_INFO "CryptoDevice: Sent %d characters to the user wirg data: \"%s\"\n", messageLength, message);
         return (messageLength=0);  // clear the position to the start and return 0
     } else {
         printk(KERN_INFO "CryptoDevice: Failed to send %d characters to the user\n", errorCount);
@@ -178,7 +178,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
         printk(KERN_INFO "CryptoDevice: Failed to parse the operation: %s\n", buffer);
         return 0;
     }
-    printk(KERN_INFO "CryptoDevice: Received %zu characters from the user with the data %s...\n", len, sentence);
+    printk(KERN_INFO "CryptoDevice: Received %zu characters from the user with the data: \"%s\"\n", len, buffer);
     return len;
 }
 
@@ -255,7 +255,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
     int ret = -EFAULT;
-    char encryptedSentence[16];
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
@@ -306,7 +305,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     ret = test_skcipher_encdec(&sk, encrypt);
     if (ret) { goto out; }
 
-    sg_copy_to_buffer(&sk.sg, 1, &sentence, 16); // TODO: copy while number of bytes copied < total bytes
+    sg_copy_to_buffer(&sk.sg, 1, &message, 16); // TODO: copy while number of bytes copied < total bytes
 
     pr_info("Encryption triggered successfully. Encrypted: %s\n", message);
 out:
