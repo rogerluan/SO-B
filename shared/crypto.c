@@ -250,8 +250,9 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     int ret = -EFAULT;
     char encryptedSentence[16];
 
-    for (int i = 0; i < 16; ++i) {
-        encryptedSentence[i] = '\0';
+    int j = 0;
+    for (j; j < 16; ++j) {
+        encryptedSentence[j] = '\0';
     }
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
