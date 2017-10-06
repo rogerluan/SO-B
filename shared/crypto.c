@@ -168,7 +168,8 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
     if (operation == 'c') {
         printk(KERN_INFO "CryptoDevice: Cypher\n");
-        bgmr_cipher(&sentence, 1);
+        pr_info("Sentence to cypher: \"%s\"\n", sentence);
+        bgmr_cipher(sentence, 1);
     } else if (operation == 'd') {
         printk(KERN_INFO "CryptoDevice: Decypher\n");
         bgmr_cipher(sentence, 0);
@@ -260,7 +261,8 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     int index;
     int isMultipleOf16 = (sentenceLength % 16 == 0);
     int blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
-    
+
+    pr_info("Sentence received by function: \"%s\"\n", sentence);
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
         pr_info("could not allocate skcipher handle\n");
