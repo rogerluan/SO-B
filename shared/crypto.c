@@ -38,7 +38,7 @@ MODULE_PARM_DESC(key, "This is the symetric key used to cypher and decypher de d
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
 static char   message[BUFFER_SIZE] = {0};   ///< Memory for the string that is passed from userspace
-static short  size_of_message;              ///< Used to remember the size of the string stored
+//static short  size_of_message;              ///< Used to remember the size of the string stored
 static struct class*  cryptocharClass  = NULL; ///< The device-driver class struct pointer
 static struct device* cryptocharDevice = NULL; ///< The device-driver device struct pointer
 
@@ -63,6 +63,7 @@ static struct file_operations fops = {
  *  @return returns 0 if successful
  */
 static int __init init_crypto(void) {
+    int j;
     printk(KERN_INFO "CryptoDevice: Initializing the CryptoDevice\n");
 
     // Try to dynamically allocate a major number for the device -- more difficult but worth it
@@ -94,7 +95,6 @@ static int __init init_crypto(void) {
 
     printk(KERN_INFO "CryptoDevice: The key is: %s\n", key);
 
-    int j;
     int messageSize = strlen(message);
     for (j = 0; j < messageSize; ++j) {
         message[j] = '\0';
@@ -293,8 +293,8 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         }
     }
 
-    for (i = 0; i < sentenceLength; i++) {
-        sg_init_one(&sk.sg, sentence[i*16], 16);
+    for (index = 0; index < sentenceLength; ++index) {
+        sg_init_one(&sk.sg, sentence[index*16], 16);
         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
         init_completion(&sk.result.completion);
 
@@ -302,9 +302,9 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         ret = test_skcipher_encdec(&sk, encrypt);
         if (ret) { goto out; }
 
-        pr_info("Encrypted block %ld/%ld \n", (long)i+1, (long)blockCount);
+        pr_info("Encrypted block %ld/%ld \n", (long)index+1, (long)blockCount);
 
-        sg_copy_to_buffer(&sk.sg, 1, &message[i*16], 16); // TODO: copy while number of bytes copied < total bytes
+        sg_copy_to_buffer(&sk.sg, 1, &message[index*16], 16); // TODO: copy while number of bytes copied < total bytes
     }
 
 //    sg_init_one(&sk.sg, "rogerluankenjida", 16);
