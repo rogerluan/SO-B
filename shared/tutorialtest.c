@@ -10,7 +10,7 @@
 //  ROGER OBA                    12048534
 
 #include <stdio.h>  // I/O
-#include <stdlib.h> // strtol()
+//#include <stdlib.h> // System(
 #include <errno.h> // Supplies the error number
 #include <fcntl.h> // File management
 #include <string.h> // String manipulation
@@ -47,7 +47,7 @@ int main() {
         perror("Failed to read the message from the device.");
         return errno;
     }
-    printf("The received message is: [%X]\n", strtol(receive, NULL, strlen(receive)));
+    printf("The received message is: [%s]\n", receive);
     printf("End of the program\n");
     return 0;
 }
