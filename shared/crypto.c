@@ -251,7 +251,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     char encryptedSentence[16];
 
     int j;
-    int messageSize = strlen(message)
+    int messageSize = strlen(message);
     for (j = 0; j < messageSize; ++j) {
         message[j] = '\0';
     }
