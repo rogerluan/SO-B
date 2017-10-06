@@ -305,7 +305,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     pr_info("sentence: \"%s\"\n", sentence);
 
     for (index = 0; index < blockCount; ++index) {
-        sg_init_one(&sk.sg, sentence[index*16], 16);
+        sg_init_one(&sk.sg, *sentence[index*16], 16);
         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
         init_completion(&sk.result.completion);
 
