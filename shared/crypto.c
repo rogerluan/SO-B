@@ -32,7 +32,6 @@ MODULE_VERSION("1.0");
 
 // Parameters
 static char *key = "alpine";
-//module_param(key, charp, 0000); // Compatible with kernel 3.2.36
 module_param(key, charp, 0); // Compatible with kernel 4+
 MODULE_PARM_DESC(key, "This is the symetric key used to cypher and decypher de data.");
 
@@ -311,7 +310,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     for (index = 0; index < blockCount; ++index) {
         sg_init_one(&sk.sg, &sentence[index*16], 16);
-        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
+        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
         init_completion(&sk.result.completion);
 
         /* Encrypt Data */
