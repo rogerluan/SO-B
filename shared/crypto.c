@@ -293,6 +293,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         int i;
         for (i = rest; i < 16; ++i) {
             sentence[((blockCount-1)*16)+i] = ' ';
+            pr_info("Sentence iteration %d: \"%s\"\n", i, sentence);
         }
     }
 
