@@ -64,7 +64,6 @@ static struct file_operations fops = {
  */
 static int __init init_crypto(void) {
     int j;
-    int messageSize = strlen(message);
     printk(KERN_INFO "CryptoDevice: Initializing the CryptoDevice\n");
 
     // Try to dynamically allocate a major number for the device -- more difficult but worth it
@@ -97,7 +96,7 @@ static int __init init_crypto(void) {
     printk(KERN_INFO "CryptoDevice: The key is: %s\n", key);
 
 
-    for (j = 0; j < messageSize; ++j) {
+    for (j = 0; j < BUFFER_SIZE; ++j) {
         message[j] = '\0';
     }
 
