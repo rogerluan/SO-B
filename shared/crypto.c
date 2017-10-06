@@ -130,7 +130,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
     errorCount = copy_to_user(buffer, message, messageLength);
 
     if (errorCount==0) {            // if true then have success
-        printk(KERN_INFO "CryptoDevice: Sent %d characters to the user wirg data: \"%s\"\n", messageLength, message);
+        printk(KERN_INFO "CryptoDevice: Sent %d characters to the user with data: \"%s\"\n", messageLength, message);
         return (messageLength=0);  // clear the position to the start and return 0
     } else {
         printk(KERN_INFO "CryptoDevice: Failed to send %d characters to the user\n", errorCount);
@@ -178,7 +178,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
         printk(KERN_INFO "CryptoDevice: Failed to parse the operation: %s\n", buffer);
         return 0;
     }
-    printk(KERN_INFO "CryptoDevice: Received %zu characters from the user with the data: \"%s\"\n", len, buffer);
+    printk(KERN_INFO "CryptoDevice: Received %zu characters from the user with the data: \"%s\"\n", len, sentence);
     return len;
 }
 
@@ -255,6 +255,10 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
     int ret = -EFAULT;
+    int sentenceLength = strlen(sentence);
+    int index;
+    int isMultipleOf16 = (sentenceLength % 16 == 0);
+    int blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
@@ -280,32 +284,38 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.tfm = skcipher;
     sk.req = req;
 
-//    int i;
-//    int sentenceLength = strlen(sentence);
-//    int numberOfBlocks = sentenceLength % 1 == 0 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is alwaus >= 0
-//    for (i = 0; i < sentenceLength; i++) {
-//        sg_init_one(&sk.sg, sentence[i*16], 16);
-//        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
-//        init_completion(&sk.result.completion);
-//
-//        /* Encrypt Data */
-//        ret = test_skcipher_encdec(&sk, encrypt);
-//        if (ret) { goto out; }
-//
-//        pr_info("Encrypted %ld/%ld \n", (long)i+1, (long)numberOfBlocks);
-//
-//        sg_copy_to_buffer(&sk.sg, 1, &message[i*16], 16); // TODO: copy while number of bytes copied < total bytes
-//    }
+    // If it's not multiple of 16, we must fill the block until it is multiple of 16
+    if (!isMultipleOf16) {
+        int rest = sentenceLength % 16;
+        int i;
+        for (i = rest; i < 16; ++i) {
+            sentence[((blockCount-1)*16)+rest] = ' ';
+        }
+    }
 
-    sg_init_one(&sk.sg, "rogerluankenjida", 16);
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
-    init_completion(&sk.result.completion);
+    for (i = 0; i < sentenceLength; i++) {
+        sg_init_one(&sk.sg, sentence[i*16], 16);
+        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
+        init_completion(&sk.result.completion);
 
-    /* Encrypt Data */
-    ret = test_skcipher_encdec(&sk, encrypt);
-    if (ret) { goto out; }
+        /* Encrypt Data */
+        ret = test_skcipher_encdec(&sk, encrypt);
+        if (ret) { goto out; }
 
-    sg_copy_to_buffer(&sk.sg, 1, &message, 16); // TODO: copy while number of bytes copied < total bytes
+        pr_info("Encrypted block %ld/%ld \n", (long)i+1, (long)blockCount);
+
+        sg_copy_to_buffer(&sk.sg, 1, &message[i*16], 16); // TODO: copy while number of bytes copied < total bytes
+    }
+
+//    sg_init_one(&sk.sg, "rogerluankenjida", 16);
+//    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
+//    init_completion(&sk.result.completion);
+//
+//    /* Encrypt Data */
+//    ret = test_skcipher_encdec(&sk, encrypt);
+//    if (ret) { goto out; }
+//
+//    sg_copy_to_buffer(&sk.sg, 1, &message, 16); // TODO: copy while number of bytes copied < total bytes
 
     pr_info("Encryption triggered successfully. Encrypted: %s\n", message);
 out:
