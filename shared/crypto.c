@@ -291,8 +291,12 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     if (!isMultipleOf16) {
         int rest = sentenceLength % 16;
         int i;
-        for (i = rest; i < 16; ++i) {
-            sentence[((blockCount-1)*16)+i] = ' ';
+        for (i = rest; i <= 16; ++i) {
+            if (i == 16) {
+                sentence[i] = '\0';
+            } else {
+                sentence[((blockCount-1)*16)+i] = ' ';
+            }
             pr_info("Sentence iteration %d: \"%s\"\n", i, sentence);
         }
     }
