@@ -251,8 +251,9 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     char encryptedSentence[16];
 
     int j;
-    for (j = 0; j < 16; ++j) {
-        encryptedSentence[j] = '\0';
+    int messageSize = strlen(message)
+    for (j = 0; j < messageSize; ++j) {
+        message[j] = '\0';
     }
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
@@ -304,9 +305,9 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     ret = test_skcipher_encdec(&sk, encrypt);
     if (ret) { goto out; }
 
-    sg_copy_to_buffer(&sk.sg, 1, &encryptedSentence, 16); // TODO: copy while number of bytes copied < total bytes
+    sg_copy_to_buffer(&sk.sg, 1, &sentence, 16); // TODO: copy while number of bytes copied < total bytes
 
-    pr_info("Encryption triggered successfully. Encrypted: %s\n", encryptedSentence);
+    pr_info("Encryption triggered successfully. Encrypted: %s\n", [encryptedSentence]);
 out:
     if (skcipher) {
         crypto_free_skcipher(skcipher);
