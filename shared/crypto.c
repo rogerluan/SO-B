@@ -250,8 +250,8 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     int ret = -EFAULT;
     char encryptedSentence[16];
 
-    int j = 0;
-    for (j; j < 16; ++j) {
+    int j;
+    for (j = 0; j < 16; ++j) {
         encryptedSentence[j] = '\0';
     }
     
