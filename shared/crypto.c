@@ -94,11 +94,11 @@ static int __init init_crypto(void) {
 
     printk(KERN_INFO "CryptoDevice: The key is: %s\n", key);
 
-    int j;
-    int messageSize = strlen(message);
-    for (j = 0; j < messageSize; ++j) {
-        message[j] = '\0';
-    }
+//    int j;
+//    int messageSize = strlen(message);
+//    for (j = 0; j < messageSize; ++j) {
+//        message[j] = '\0';
+//    }
 
     return 0;
 }
