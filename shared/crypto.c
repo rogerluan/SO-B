@@ -287,46 +287,46 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.req = req;
 
     // If it's not multiple of 16, we must fill the block until it is multiple of 16
-    if (!isMultipleOf16) {
-        int rest = sentenceLength % 16;
-        int i;
-        for (i = rest; i <= 16; ++i) {
-            if (i == 16) {
-                sentence[i] = '\0';
-            } else {
-                sentence[((blockCount-1)*16)+i] = ' ';
-            }
-            pr_info("Sentence iteration %d: \"%s\"\n", i, sentence);
-        }
-    }
-
-    pr_info("isMultipleOf16: %d\n", isMultipleOf16);
-    pr_info("blockCount: %d\n", blockCount);
-    pr_info("sentence: \"%s\"\n", sentence);
-
-    for (index = 0; index < blockCount; ++index) {
-        sg_init_one(&sk.sg, *sentence[index*16], 16);
-        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
-        init_completion(&sk.result.completion);
-
-        /* Encrypt Data */
-        ret = test_skcipher_encdec(&sk, encrypt);
-        if (ret) { goto out; }
-
-        pr_info("Encrypted block %ld/%ld \n", (long)index+1, (long)blockCount);
-
-        sg_copy_to_buffer(&sk.sg, 1, &message[index*16], 16); // TODO: copy while number of bytes copied < total bytes
-    }
-
-//    sg_init_one(&sk.sg, "rogerluankenjida", 16);
-//    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
-//    init_completion(&sk.result.completion);
+//    if (!isMultipleOf16) {
+//        int rest = sentenceLength % 16;
+//        int i;
+//        for (i = rest; i <= 16; ++i) {
+//            if (i == 16) {
+//                sentence[i] = '\0';
+//            } else {
+//                sentence[((blockCount-1)*16)+i] = ' ';
+//            }
+//            pr_info("Sentence iteration %d: \"%s\"\n", i, sentence);
+//        }
+//    }
 //
-//    /* Encrypt Data */
-//    ret = test_skcipher_encdec(&sk, encrypt);
-//    if (ret) { goto out; }
+//    pr_info("isMultipleOf16: %d\n", isMultipleOf16);
+//    pr_info("blockCount: %d\n", blockCount);
+//    pr_info("sentence: \"%s\"\n", sentence);
 //
-//    sg_copy_to_buffer(&sk.sg, 1, &message, 16); // TODO: copy while number of bytes copied < total bytes
+//    for (index = 0; index < blockCount; ++index) {
+//        sg_init_one(&sk.sg, &sentence[index*16], 16);
+//        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
+//        init_completion(&sk.result.completion);
+//
+//        /* Encrypt Data */
+//        ret = test_skcipher_encdec(&sk, encrypt);
+//        if (ret) { goto out; }
+//
+//        pr_info("Encrypted block %ld/%ld \n", (long)index+1, (long)blockCount);
+//
+//        sg_copy_to_buffer(&sk.sg, 1, &message[index*16], 16); // TODO: copy while number of bytes copied < total bytes
+//    }
+
+    sg_init_one(&sk.sg, "rogerluankenjida", 16);
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
+    init_completion(&sk.result.completion);
+
+    /* Encrypt Data */
+    ret = test_skcipher_encdec(&sk, encrypt);
+    if (ret) { goto out; }
+
+    sg_copy_to_buffer(&sk.sg, 1, &message, 16); // TODO: copy while number of bytes copied < total bytes
 
     pr_info("Encryption triggered successfully. Encrypted: %s\n", message);
 out:
