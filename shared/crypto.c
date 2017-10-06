@@ -120,11 +120,12 @@ static void __exit exit_crypto(void) {
 static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset) {
     int errorCount = 0;
     // copy_to_user has the format ( * to, *from, size) and returns 0 on success
-    errorCount = copy_to_user(buffer, message, size_of_message);
+    int messageLength = strlen(message);
+    errorCount = copy_to_user(buffer, message, messageLength);
 
     if (errorCount==0) {            // if true then have success
-        printk(KERN_INFO "CryptoDevice: Sent %d characters to the user\n", size_of_message);
-        return (size_of_message=0);  // clear the position to the start and return 0
+        printk(KERN_INFO "CryptoDevice: Sent %d characters to the user\n", messageLength);
+        return (messageLength=0);  // clear the position to the start and return 0
     } else {
         printk(KERN_INFO "CryptoDevice: Failed to send %d characters to the user\n", errorCount);
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
@@ -307,7 +308,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     sg_copy_to_buffer(&sk.sg, 1, &sentence, 16); // TODO: copy while number of bytes copied < total bytes
 
-    pr_info("Encryption triggered successfully. Encrypted: %s\n", encryptedSentence);
+    pr_info("Encryption triggered successfully. Encrypted: %s\n", message);
 out:
     if (skcipher) {
         crypto_free_skcipher(skcipher);
