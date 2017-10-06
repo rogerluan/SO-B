@@ -149,7 +149,12 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
  */
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset) {
     char kernelBuffer[len], operation, space, sentence[len-2];
+    int j;
     int errorCount = copy_from_user(kernelBuffer, buffer, len);
+
+    for (j = 0; j < len-2; ++j) {
+        sentence[j] = '\0';
+    }
 
     if (errorCount != 0) {
         printk(KERN_INFO "CryptoDevice: Failed to receive %d characters from the user\n", errorCount);
