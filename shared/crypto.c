@@ -294,6 +294,10 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         }
     }
 
+    pr_info("isMultipleOf16: %d\n", isMultipleOf16);
+    pr_info("blockCount: %d\n", blockCount);
+    pr_info("sentence: \"%s\"\n", sentence);
+
     for (index = 0; index < blockCount; ++index) {
         sg_init_one(&sk.sg, &sentence[index*16], 16);
         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
