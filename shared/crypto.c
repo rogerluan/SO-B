@@ -168,7 +168,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
 
     if (operation == 'c') {
         printk(KERN_INFO "CryptoDevice: Cypher\n");
-        bgmr_cipher(sentence, 1);
+        bgmr_cipher(&sentence, 1);
     } else if (operation == 'd') {
         printk(KERN_INFO "CryptoDevice: Decypher\n");
         bgmr_cipher(sentence, 0);
