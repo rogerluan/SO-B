@@ -92,8 +92,14 @@ static int __init init_crypto(void) {
     }
     printk(KERN_INFO "CryptoDevice: device class created correctly\n"); // Made it! device was initialized
 
-    printk(KERN_INFO "The key is: %s\n", key);
-    
+    printk(KERN_INFO "CryptoDevice: The key is: %s\n", key);
+
+    int j;
+    int messageSize = strlen(message);
+    for (j = 0; j < messageSize; ++j) {
+        message[j] = '\0';
+    }
+
     return 0;
 }
 
@@ -250,12 +256,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_request *req = NULL;
     int ret = -EFAULT;
     char encryptedSentence[16];
-
-    int j;
-    int messageSize = strlen(message);
-    for (j = 0; j < messageSize; ++j) {
-        message[j] = '\0';
-    }
     
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
