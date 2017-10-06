@@ -64,6 +64,7 @@ static struct file_operations fops = {
  */
 static int __init init_crypto(void) {
     int j;
+    int messageSize = strlen(message);
     printk(KERN_INFO "CryptoDevice: Initializing the CryptoDevice\n");
 
     // Try to dynamically allocate a major number for the device -- more difficult but worth it
@@ -95,7 +96,7 @@ static int __init init_crypto(void) {
 
     printk(KERN_INFO "CryptoDevice: The key is: %s\n", key);
 
-    int messageSize = strlen(message);
+
     for (j = 0; j < messageSize; ++j) {
         message[j] = '\0';
     }
@@ -294,7 +295,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     }
 
     for (index = 0; index < sentenceLength; ++index) {
-        sg_init_one(&sk.sg, sentence[index*16], 16);
+        sg_init_one(&sk.sg, &sentence[index*16], 16);
         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "dummyRandomData!");
         init_completion(&sk.result.completion);
 
