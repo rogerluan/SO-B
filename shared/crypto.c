@@ -19,12 +19,14 @@
 #include <linux/crypto.h>         // crypto_async_request definition
 #include <linux/scatterlist.h>    // scatterlist struct definition
 #include <crypto/skcipher.h>      // crypto_skcipher_encrypt definition
+#include <crypto/hash.h>      // crypto_skcipher_encrypt definition
 #include <linux/random.h>         // random function declarations
 
 
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
 #define BUFFER_SIZE 2048
+#define SENTENCE_BLOCK_SIZE 16
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Bruno Augusto Pedroso\t\t12662136\nGiuliana Salgado Aleproti\t12120457\nMatheus de Paula Nicolau\t12085957\nRoger Oba\t\t\t\t\t12048534");
@@ -47,7 +49,15 @@ static struct device* cryptocharDevice = NULL; ///< The device-driver device str
 static ssize_t dev_read(struct file *, char *, size_t, loff_t *);
 static ssize_t dev_write(struct file *, const char *, size_t, loff_t *);
 static int bgmr_cipher(char *sentence, int encrypt);
+static int bgmr_hash(const unsigned char *data, unsigned int datalen);
 
+/**
+*Struct used for Hash function
+*/
+struct sdesc {
+    struct shash_desc shash;
+    char ctx[];
+};
 /** @brief Devices are represented as file structure in the kernel. The file_operations structure from
  *  /linux/fs.h lists the callback functions that you wish to associated with your file operations
  *  using a C99 syntax structure. char devices usually implement open, read, write and release calls
@@ -119,13 +129,14 @@ static void __exit exit_crypto(void) {
  *  @param offset The offset if required
  */
 static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset) {
-    int errorCount = 0;
+     int errorCount = 0;
     // copy_to_user has the format ( * to, *from, size) and returns 0 on success
-    errorCount = copy_to_user(buffer, message, size_of_message);
+    int messageLength = strlen(message);
+    errorCount = copy_to_user(buffer, message, messageLength);
 
     if (errorCount==0) {            // if true then have success
-        printk(KERN_INFO "CryptoDevice: Sent %d characters to the user\n", size_of_message);
-        return (size_of_message=0);  // clear the position to the start and return 0
+        printk(KERN_INFO "CryptoDevice: Sent %d characters to the user with data: \"%s\"\n", messageLength, message);
+        return (messageLength=0);  // clear the position to the start and return 0
     } else {
         printk(KERN_INFO "CryptoDevice: Failed to send %d characters to the user\n", errorCount);
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
@@ -153,7 +164,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     operation = kernelBuffer[0];
     space = kernelBuffer[1];
     strncpy(sentence, kernelBuffer+2, sizeof(sentence));
-
+        printk(KERN_INFO "SENTENCE COPIED: %s\n", sentence);
     if (space != ' ') {
         printk(KERN_INFO "CryptoDevice: Failed to parse the operation: %s\n", buffer);
         return 0;
@@ -168,6 +179,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     } else if (operation == 'h') {
         // TODO: hash message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Hash\n");
+	bgmr_hash(sentence, sizeof(sentence));
     } else {
         printk(KERN_INFO "CryptoDevice: Failed to parse the operation: %s\n", buffer);
         return 0;
@@ -224,8 +236,10 @@ static unsigned int test_skcipher_encdec(struct skcipher_def *sk, int enc) {
     int rc = 0;
     
     if (enc) {
+	pr_info("Encrypt\n");
         rc = crypto_skcipher_encrypt(sk->req);
     } else {
+	pr_info("Decrypt\n");
         rc = crypto_skcipher_decrypt(sk->req);
     }
     
@@ -252,9 +266,12 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_def sk;
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
+    char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
 //    char *ivdata = NULL;
     int ret = -EFAULT;
-    
+    strncpy(blockSizeSentence, sentence, SENTENCE_BLOCK_SIZE);
+     pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
+
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
         pr_info("could not allocate skcipher handle\n");
@@ -289,15 +306,21 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.req = req;
     
     /* We encrypt one block */
-    sg_init_one(&sk.sg, "rogerluankenjida", 16);
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "1234567890123456");
+    //sg_init_one(&sk.sg, "rogerluankenjida", 16);
+    //skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "1234567890123456");
+    //init_completion(&sk.result.completion);
+
+    sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
     init_completion(&sk.result.completion);
     
     /* encrypt data */
     ret = test_skcipher_encdec(&sk, encrypt);
     if (ret) { goto out; }
+
+    sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
     
-    pr_info("Encryption triggered successfully\n");
+     pr_info("Encryption triggered successfully. Encrypted: %s\n", message);
     
 out:
     if (skcipher) {
@@ -309,5 +332,52 @@ out:
 //    if (ivdata) {
 //        kfree(ivdata);
 //    }
+    return ret;
+}
+
+static struct sdesc *init_sdesc(struct crypto_shash *alg)
+{
+    struct sdesc *sdesc;
+    int size;
+
+    size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
+    sdesc = kmalloc(size, GFP_KERNEL);
+    if (!sdesc)
+        return ERR_PTR(-ENOMEM);
+    sdesc->shash.tfm = alg;
+    sdesc->shash.flags = 0x0;
+    return sdesc;
+}
+
+static int calc_hash(struct crypto_shash *alg,
+             const unsigned char *data, unsigned int datalen)
+{
+    struct sdesc *sdesc;
+    int ret;
+
+    sdesc = init_sdesc(alg);
+    if (IS_ERR(sdesc)) {
+        pr_info("can't alloc sdesc\n");
+        return PTR_ERR(sdesc);
+    }
+
+    ret = crypto_shash_digest(&sdesc->shash, data, datalen, message);
+    kfree(sdesc);
+    return ret;
+}
+
+static int bgmr_hash(const unsigned char *data, unsigned int datalen)
+{
+    struct crypto_shash *alg;
+    char *hash_alg_name = "sha1-padlock-nano";
+    int ret;
+
+    alg = crypto_alloc_shash("sha1", CRYPTO_ALG_TYPE_SHASH, 0);
+    if (IS_ERR(alg)) {
+            pr_info("can't alloc alg %s\n", hash_alg_name);
+            return PTR_ERR(alg);
+    }
+    ret = calc_hash(alg, data, datalen);
+    crypto_free_shash(alg);
     return ret;
 }
