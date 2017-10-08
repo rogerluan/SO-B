@@ -369,7 +369,6 @@ static int calc_hash(struct crypto_shash *alg,
 static int bgmr_hash(const unsigned char *data, unsigned int datalen)
 {
     struct crypto_shash *alg;
-    char *hash_alg_name = "sha1-padlock-nano";
     int ret;
 
     alg = crypto_alloc_shash("sha1", CRYPTO_ALG_TYPE_SHASH, 0);
