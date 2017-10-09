@@ -41,7 +41,6 @@ MODULE_PARM_DESC(key, "This is the symetric key used to cypher and decypher de d
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
 static char   message[BUFFER_SIZE] = {0};   ///< Memory for the string that is passed from userspace
-static short  size_of_message;              ///< Used to remember the size of the string stored
 static struct class*  cryptocharClass  = NULL; ///< The device-driver class struct pointer
 static struct device* cryptocharDevice = NULL; ///< The device-driver device struct pointer
 
@@ -262,10 +261,10 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
     char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
-//    char *ivdata = NULL;
+    char tempDecryptedMessage[BUFFER_SIZE] = {0};
     int ret = -EFAULT;
     strncpy(blockSizeSentence, sentence, SENTENCE_BLOCK_SIZE);
-     pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
+    pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
 
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
@@ -291,11 +290,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     sk.tfm = skcipher;
     sk.req = req;
-    
-    /* We encrypt one block */
-    //sg_init_one(&sk.sg, "rogerluankenjida", 16);
-    //skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, "1234567890123456");
-    //init_completion(&sk.result.completion);
 
     sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
     skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
@@ -306,8 +300,16 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     if (ret) { goto out; }
 
     sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
+
+    // Decrypt data to show on kernlog
+    sg_init_one(&sk.sg, &message[0], strlen(message));
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
+    ret = test_skcipher_encdec(&sk, !encrypt);
+    if (ret) { goto out; }
+
+    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[0], 16);
     
-    pr_info("Encryption triggered successfully. Encrypted: %s\n", message);
+    pr_info("Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
     
 out:
     if (skcipher) {
