@@ -215,7 +215,6 @@ struct skcipher_def {
 
 /* Callback function */
 static void test_skcipher_cb(struct crypto_async_request *req, int error) {
-    pr_info("Callback called\n");
     struct tcrypt_result *result = req->data;
 
     if (error == -EINPROGRESS) {
@@ -223,9 +222,6 @@ static void test_skcipher_cb(struct crypto_async_request *req, int error) {
         return;
     }
     result->err = error;
-
-    strcpy(message, req->data);
-    size_of_message = strlen(message);
     pr_info("Encryption finished successfully\n");
     complete(&result->completion);
 }
@@ -292,14 +288,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         ret = -EAGAIN;
         goto out;
     }
-    
-//    /* IV will be random */
-//    ivdata = kmalloc(16, GFP_KERNEL);
-//    if (!ivdata) {
-//        pr_info("could not allocate ivdata\n");
-//        goto out;
-//    }
-//    get_random_bytes(ivdata, 16);
 
     sk.tfm = skcipher;
     sk.req = req;
@@ -319,7 +307,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
     
-     pr_info("Encryption triggered successfully. Encrypted: %s\n", message);
+    pr_info("Encryption triggered successfully. Encrypted: %s\n", message);
     
 out:
     if (skcipher) {
@@ -328,9 +316,6 @@ out:
     if (req) {
         skcipher_request_free(req);
     }
-//    if (ivdata) {
-//        kfree(ivdata);
-//    }
     return ret;
 }
 
@@ -366,10 +351,9 @@ static int calc_hash(struct crypto_shash *alg, const unsigned char *data, unsign
 static int bgmr_hash(const unsigned char *data, unsigned int datalen) {
     struct crypto_shash *alg;
     int ret;
-
     alg = crypto_alloc_shash("sha1", CRYPTO_ALG_TYPE_SHASH, 0);
     if (IS_ERR(alg)) {
-        pr_info("can't alloc alg %s\n", hash_alg_name);
+        pr_info("can't alloc alg sha1\n");
         return PTR_ERR(alg);
     }
     ret = calc_hash(alg, data, datalen);
