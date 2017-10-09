@@ -290,14 +290,16 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     sk.tfm = skcipher;
     sk.req = req;
 
-//     If it's not multiple of 16, we must fill the block until it is multiple of 16
+    // If it's not multiple of 16, we must fill the block until it is multiple of 16
     if (!isMultipleOf16) {
         int rest = sentenceLength % 16;
         int i;
         for (i = rest; i <= 16; ++i) {
             if (i == 16) {
+                // If this is the last position, add a \0 (this fixes a bug that was being caused for unknown reasons - this shouldn't be needed)
                 sentence[i] = '\0';
             } else {
+                // Else, add a space to that position so we an fill up the block until it is 16 bytes long
                 sentence[((blockCount-1)*16)+i] = ' ';
             }
             pr_info("Sentence iteration %d: \"%s\"\n", i, sentence);
