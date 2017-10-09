@@ -177,9 +177,8 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
         printk(KERN_INFO "CryptoDevice: Decypher\n");
         bgmr_cipher(sentence, 0);
     } else if (operation == 'h') {
-        // TODO: hash message (modify the sentence)
         printk(KERN_INFO "CryptoDevice: Hash\n");
-	bgmr_hash(sentence, sizeof(sentence));
+        bgmr_hash(sentence, sizeof(sentence));
     } else {
         printk(KERN_INFO "CryptoDevice: Failed to parse the operation: %s\n", buffer);
         return 0;
@@ -335,23 +334,21 @@ out:
     return ret;
 }
 
-static struct sdesc *init_sdesc(struct crypto_shash *alg)
-{
+static struct sdesc *init_sdesc(struct crypto_shash *alg) {
     struct sdesc *sdesc;
     int size;
 
     size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
     sdesc = kmalloc(size, GFP_KERNEL);
-    if (!sdesc)
+    if (!sdesc) {
         return ERR_PTR(-ENOMEM);
+    }
     sdesc->shash.tfm = alg;
     sdesc->shash.flags = 0x0;
     return sdesc;
 }
 
-static int calc_hash(struct crypto_shash *alg,
-             const unsigned char *data, unsigned int datalen)
-{
+static int calc_hash(struct crypto_shash *alg, const unsigned char *data, unsigned int datalen) {
     struct sdesc *sdesc;
     int ret;
 
@@ -366,15 +363,14 @@ static int calc_hash(struct crypto_shash *alg,
     return ret;
 }
 
-static int bgmr_hash(const unsigned char *data, unsigned int datalen)
-{
+static int bgmr_hash(const unsigned char *data, unsigned int datalen) {
     struct crypto_shash *alg;
     int ret;
 
     alg = crypto_alloc_shash("sha1", CRYPTO_ALG_TYPE_SHASH, 0);
     if (IS_ERR(alg)) {
-            pr_info("can't alloc alg %s\n", hash_alg_name);
-            return PTR_ERR(alg);
+        pr_info("can't alloc alg %s\n", hash_alg_name);
+        return PTR_ERR(alg);
     }
     ret = calc_hash(alg, data, datalen);
     crypto_free_shash(alg);
