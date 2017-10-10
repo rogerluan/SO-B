@@ -174,7 +174,9 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     operation = kernelBuffer[0];
     space = kernelBuffer[1];
     strncpy(sentence, kernelBuffer+2, sizeof(sentence));
+    sentence[len-2]='\0';
         printk(KERN_INFO "SENTENCE COPIED: %s\n", sentence);
+
     if (space != ' ') {
         printk(KERN_INFO "CryptoDevice: Failed to parse the string. No space character found in the second position.");
         return 0;
@@ -274,7 +276,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
     char tempDecryptedMessage[BUFFER_SIZE] = {0};
     int ret = -EFAULT;
-    strncpy(blockSizeSentence, sentence, SENTENCE_BLOCK_SIZE);
+    strncpy(blockSizeSentence, sentence, sizeof(sentence));
     pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
 
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
@@ -312,15 +314,18 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
 
+
     // Decrypt data to show on kernlog
-    sg_init_one(&sk.sg, &message[0], strlen(message));
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
+    //sg_init_one(&sk.sg, &message[0], strlen(message));
+    //skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
     ret = test_skcipher_encdec(&sk, !encrypt);
     if (ret) { goto out; }
 
     sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[0], 16);
     
     pr_info("Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
+
+
     
 out:
     if (skcipher) {
