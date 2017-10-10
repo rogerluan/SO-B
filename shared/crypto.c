@@ -153,6 +153,10 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
  */
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset) {
     char kernelBuffer[len], operation, space, sentence[len-2];
+    int i;
+    for(i = 0; i<= BUFFER_SIZE; i++) {
+	message[i]=0;
+    }
 
     if (len > BUFFER_SIZE) {
         printk(KERN_INFO "CryptoDevice: Failed to parse the string: string exceeds max length allowed (%d bytes)\n", BUFFER_SIZE);
@@ -273,10 +277,16 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_def sk;
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
+
     char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
     char tempDecryptedMessage[BUFFER_SIZE] = {0};
+
+    int index = 0;
     int ret = -EFAULT;
-    strncpy(blockSizeSentence, sentence, sizeof(sentence));
+    int sentenceLength = strlen(sentence);
+    int isMultipleOf16 = (sentenceLength % 16 == 0);
+    int blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0 
+    //strncpy(blockSizeSentence, sentence, strlen(sentence));
     pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
 
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
@@ -303,29 +313,40 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     sk.tfm = skcipher;
     sk.req = req;
+pr_info("Before Multiple os 16: %d\n", ((blockCount-1)*16));
+    if (!isMultipleOf16) {
+	int rest = sentenceLength % 16;
+        strncpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
+	//blockSizeSentence[SENTENCE_BLOCK_SIZE]='\0';
+pr_info("REST: %d\n", rest);
+    }
 
-    sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
-    init_completion(&sk.result.completion);
-    
-    /* encrypt data */
-    ret = test_skcipher_encdec(&sk, encrypt);
-    if (ret) { goto out; }
+    for(index = 0; index < blockCount; ++index) {
 
-    sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
+     if(index == blockCount-1 && !isMultipleOf16) {
+     	sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
+     }
+     else{
+        sg_init_one(&sk.sg, &sentence[index*16], 16);
+     }
+     skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
+     init_completion(&sk.result.completion);
 
+     /* encrypt data */
+     ret = test_skcipher_encdec(&sk, encrypt);    
+     if (ret) { goto out; }
+
+     sg_copy_to_buffer(&sk.sg, 1, &message[index*16], 16);
 
     // Decrypt data to show on kernlog
-    //sg_init_one(&sk.sg, &message[0], strlen(message));
-    //skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
     ret = test_skcipher_encdec(&sk, !encrypt);
     if (ret) { goto out; }
 
-    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[0], 16);
+    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[index*16], 16);
+   
+    }
     
     pr_info("Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
-
-
     
 out:
     if (skcipher) {
@@ -334,8 +355,8 @@ out:
     if (req) {
         skcipher_request_free(req);
     }
-    return ret;
-}
+    return ret;  
+} 
 
 static struct sdesc *init_sdesc(struct crypto_shash *alg) {
     struct sdesc *sdesc;
