@@ -19,13 +19,12 @@
 #include <linux/crypto.h>         // crypto_async_request definition
 #include <linux/scatterlist.h>    // scatterlist struct definition
 #include <crypto/skcipher.h>      // crypto_skcipher_encrypt definition
-#include <crypto/hash.h>      // crypto_skcipher_encrypt definition
+#include <crypto/hash.h>          // crypto_skcipher_encrypt definition
 #include <linux/random.h>         // random function declarations
-
 
 #define DEVICE_NAME "cryptochar"    ///< The device will appear at /dev/cryptochar using this value
 #define CLASS_NAME  "crypto"        ///< The device class -- this is a character device driver
-#define BUFFER_SIZE 2048
+#define BUFFER_SIZE 2050
 #define SENTENCE_BLOCK_SIZE 16
 
 MODULE_LICENSE("GPL");
@@ -57,6 +56,7 @@ struct sdesc {
     struct shash_desc shash;
     char ctx[];
 };
+
 /** @brief Devices are represented as file structure in the kernel. The file_operations structure from
  *  /linux/fs.h lists the callback functions that you wish to associated with your file operations
  *  using a C99 syntax structure. char devices usually implement open, read, write and release calls
@@ -153,6 +153,17 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
  */
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset) {
     char kernelBuffer[len], operation, space, sentence[len-2];
+
+    if (len > BUFFER_SIZE) {
+        printk(KERN_INFO "CryptoDevice: Failed to parse the string: string exceeds max length allowed (%d bytes)\n", BUFFER_SIZE);
+        return 0;
+    }
+
+    if (len <= 2) {
+        printk(KERN_INFO "CryptoDevice: Failed to parse the string: string doesn't contain any sentence to be operated.\n");
+        return 0;
+    }
+
     int errorCount = copy_from_user(kernelBuffer, buffer, len);
 
     if (errorCount != 0) {
@@ -165,7 +176,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
     strncpy(sentence, kernelBuffer+2, sizeof(sentence));
         printk(KERN_INFO "SENTENCE COPIED: %s\n", sentence);
     if (space != ' ') {
-        printk(KERN_INFO "CryptoDevice: Failed to parse the operation: %s\n", buffer);
+        printk(KERN_INFO "CryptoDevice: Failed to parse the string. No space character found in the second position.");
         return 0;
     }
 
@@ -179,7 +190,7 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
         printk(KERN_INFO "CryptoDevice: Hash\n");
         bgmr_hash(sentence, sizeof(sentence));
     } else {
-        printk(KERN_INFO "CryptoDevice: Failed to parse the operation: %s\n", buffer);
+        printk(KERN_INFO "CryptoDevice: Failed to parse the string: \"%s\"\n", kernelBuffer);
         return 0;
     }
     printk(KERN_INFO "CryptoDevice: Received %zu characters from the user with the data %s...\n", len, sentence);

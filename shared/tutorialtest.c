@@ -16,7 +16,7 @@
 #include <string.h> // String manipulation
 #include <unistd.h> // Open/write/read functions
 
-#define BUFFER_LENGTH 1024               ///< The buffer length (crude but fine)
+#define BUFFER_LENGTH 2050               ///< The buffer length (crude but fine)
 static char receive[BUFFER_LENGTH];     ///< The receive buffer from the LKM
 
 int main() {
