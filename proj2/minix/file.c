@@ -9,7 +9,14 @@
 #include "minix.h"
 #include "linux/uio.h"
 #include "linux/swap.h"
-#include "linux/pagemap.h"
+
+// Implementation of the symbol exposed in `linux/pagemap.h`
+int wait_on_page_bit_killable(struct page *page, int bit_nr)
+{
+    wait_queue_head_t *q = page_waitqueue(page);
+    return wait_on_page_bit_common(q, page, bit_nr, TASK_KILLABLE, false);
+}
+
 
 /**
  * do_generic_file_read - generic file read routine
