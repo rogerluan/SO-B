@@ -8,7 +8,7 @@
 
 #include "minix.h"
 #include "linux/uio.h"
-#include <linux/fs.h>
+#include "mm/filemap.c"
 
 /**
  * generic_file_write_iter - write data to a file
