@@ -9,6 +9,7 @@
 #include "minix.h"
 #include "linux/uio.h"
 #include "linux/swap.h"
+#include "linux/pagemap.h"
 
 /**
  * do_generic_file_read - generic file read routine
