@@ -9,7 +9,7 @@
 #include "minix.h"
 #include "linux/uio.h" // iov_iter
 #include "linux/time.h" // timestamp
-#include "linux/socket.h" // memcpy_fromiovec
+#include "linux/fs.h" // vfs_readv
 
 /**
  * generic_file_write_iter - write data to a file
@@ -22,16 +22,23 @@
  */
 ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
-    int ret;
-    char kernelBuffer[from->iov->iov_len];
-    ret = memcpy_fromiovec(kernelBuffer, from->iov, from->iov->iov_len);
-    if (ret == -EFAULT) {
-        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: memcpy_fromiovec failed with error code -EFAULT in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
-    } else {
-        // TODO: Cypher kernelBuffer
+    ssize_t bytesRead;
+    ssize_t len = from->iov->iov_len;
+    char kernelBuffer[len];
 
-        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Successfully copied kernel buffer: \"%s\"\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, kernelBuffer);
-    }
+    //    extern ssize_t vfs_writev(struct file *, const struct iovec __user *, unsigned long, loff_t *, int);
+    bytesRead = copy_from_iter(kernelBuffer, len, from); // TODO: test
+        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Read %ld bytes in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, (long)bytesRead, __FUNCTION__);
+//    if (bytesRead < len) {
+//        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: failed to read all bytes at once in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
+//    } else {
+//        // TODO: Cypher kernelBuffer
+//
+//        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Successfully copied kernel buffer: \"%s\"\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, kernelBuffer);
+//
+////        extern ssize_t vfs_readv(struct file *, const struct iovec __user *, unsigned long, loff_t *, int);
+//
+//    }
     return generic_file_write_iter(iocb, from); // Implements the original function
 }
 
