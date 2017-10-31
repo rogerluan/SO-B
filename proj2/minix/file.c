@@ -8,7 +8,7 @@
 
 #include "minix.h"
 #include "linux/uio.h"
-
+#include "linux/swap.h"
 
 /**
  * do_generic_file_read - generic file read routine
@@ -218,7 +218,7 @@ static ssize_t do_generic_file_read(struct file *filp, loff_t *ppos,
                     goto find_page;
                 }
                 unlock_page(page);
-                shrink_readahead_size_eio(filp, ra);
+                ra->ra_pages /= 4;
                 error = -EIO;
                 goto readpage_error;
             }
