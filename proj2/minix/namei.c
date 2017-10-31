@@ -40,7 +40,7 @@ static int minix_mknod(struct inode * dir, struct dentry *dentry, umode_t mode, 
 {
 	int error;
 	struct inode *inode;
-
+    printk(KERN_INFO "Crypto: %s\n", __FUNCTION__);
 	if (!old_valid_dev(rdev))
 		return -EINVAL;
 
