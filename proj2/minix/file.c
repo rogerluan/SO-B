@@ -8,6 +8,7 @@
 
 #include "minix.h"
 #include "linux/uio.h"
+#include "linux/time.h"
 
 /**
  * generic_file_write_iter - write data to a file
@@ -23,7 +24,16 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
     struct file *file = iocb->ki_filp;
     struct inode *inode = file->f_mapping->host;
     ssize_t ret;
-    printk(KERN_INFO "Crypto: Customised print at %s\n", __FUNCTION__);
+
+
+    struct timeval time;
+    unsigned long local_time;
+
+    do_gettimeofday(&time);
+    local_time = (u32)(time.tv_sec - (sys_tz.tz_minuteswest * 60));
+    rtc_time_to_tm(local_time, &tm);
+
+    printk(KERN_INFO "Crypto [%04d-%02d-%02d %02d:%02d:%02d]: Customised print at %s\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, __FUNCTION__);
     return generic_file_write_iter(iocb, from); // Implements the original function
 }
 
