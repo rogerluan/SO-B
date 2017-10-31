@@ -7,6 +7,7 @@
  */
 
 #include "minix.h"
+#include "linux/uio.h"
 
 /**
  * generic_file_write_iter - write data to a file
