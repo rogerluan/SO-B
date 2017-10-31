@@ -7,8 +7,9 @@
  */
 
 #include "minix.h"
-#include "linux/uio.h"
-#include "linux/time.h"
+#include "linux/uio.h" // iov_iter
+#include "linux/time.h" // timestamp
+#include "linux/socket.h" // memcpy_fromiovec
 
 /**
  * generic_file_write_iter - write data to a file
