@@ -7,6 +7,7 @@
  */
 
 #include "minix.h"
+#include "linux/uio.h"
 
 /**
  * generic_file_write_iter - write data to a file
@@ -46,11 +47,11 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
  */
 ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 {
-    printk(KERN_INFO "Crypto: Customised print at %s\n", __FUNCTION__);
     struct file *file = iocb->ki_filp;
     ssize_t retval = 0;
-    size_t count = iov_iter_count(iter);
+    size_t count = iter->count;
 
+    printk(KERN_INFO "Crypto: Customised print at %s\n", __FUNCTION__);
     if (!count)
         goto out; /* skip atime */
 
@@ -83,7 +84,7 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
          * the rest of the read.  Buffered reads will not work for
          * DAX files, so don't bother trying.
          */
-        if (retval < 0 || !iov_iter_count(iter) || iocb->ki_pos >= size ||
+        if (retval < 0 || !iter->count || iocb->ki_pos >= size ||
             IS_DAX(inode))
             goto out;
     }
