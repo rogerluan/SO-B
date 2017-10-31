@@ -21,10 +21,25 @@
  */
 ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
-    struct file *file = iocb->ki_filp;
-    struct inode *inode = file->f_mapping->host;
-    ssize_t ret;
-    printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Customised print at %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
+    iov_iter.
+
+
+    /*
+     *    Copy iovec to kernel. Returns  on error.
+     *
+     *    Note: this modifies the original iovec.
+     */
+
+    int ret;
+    char *kernelBuffer;
+    ret = memcpy_fromiovec(kernelBuffer, from.iov, from.iov.iov_len);
+    if (ret == -EFAULT) {
+        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: memcpy_fromiovec failed with error code -EFAULT in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
+    } else {
+        // TODO: Cypher kernelBuffer
+
+        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Successfully copied kernel buffer: \"%s\"\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, kernelBuffer);
+    }
     return generic_file_write_iter(iocb, from); // Implements the original function
 }
 
