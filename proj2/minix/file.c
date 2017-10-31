@@ -21,18 +21,9 @@
  */
 ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
-    iov_iter.
-
-
-    /*
-     *    Copy iovec to kernel. Returns  on error.
-     *
-     *    Note: this modifies the original iovec.
-     */
-
     int ret;
     char *kernelBuffer;
-    ret = memcpy_fromiovec(kernelBuffer, from.iov, from.iov.iov_len);
+    ret = memcpy_fromiovec(kernelBuffer, from->iov, from->iov->iov_len);
     if (ret == -EFAULT) {
         printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: memcpy_fromiovec failed with error code -EFAULT in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
     } else {
@@ -54,10 +45,6 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
  */
 ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 {
-    struct file *file = iocb->ki_filp;
-    ssize_t retval = 0;
-    size_t count = iter->count;
-
     printk(KERN_INFO "Crypto: Customised print at %s\n", __FUNCTION__);
 //    if (!count)
 //        goto out; /* skip atime */
