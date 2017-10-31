@@ -24,7 +24,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
     struct file *file = iocb->ki_filp;
     struct inode *inode = file->f_mapping->host;
     ssize_t ret;
-    printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Customised print at %s\n", (CURRENT_TIME.tv_sec / 3600) % (24), (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
+    printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Customised print at %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
     return generic_file_write_iter(iocb, from); // Implements the original function
 }
 
