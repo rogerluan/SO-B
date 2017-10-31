@@ -15,7 +15,7 @@
 const struct file_operations minix_file_operations = {
 	.llseek		= generic_file_llseek,
 	.read_iter	= generic_file_read_iter,
-	.write_iter	= generic_file_write_iter,
+	.write_iter	= crypto_file_write_iter,
 	.mmap		= generic_file_mmap,
 	.fsync		= generic_file_fsync,
 	.splice_read	= generic_file_splice_read,
@@ -49,3 +49,35 @@ const struct inode_operations minix_file_inode_operations = {
 	.setattr	= minix_setattr,
 	.getattr	= minix_getattr,
 };
+
+/**
+ * crypto_file_write_iter - write data to a file
+ * @iocb:    IO state structure
+ * @from:    iov_iter with data to write
+ *
+ * This is a wrapper around __generic_file_write_iter() to be used by most
+ * filesystems. It takes care of syncing the file in case of O_SYNC file
+ * and acquires i_mutex as needed.
+ */
+ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+    struct file *file = iocb->ki_filp;
+    struct inode *inode = file->f_mapping->host;
+    ssize_t ret;
+
+    mutex_lock(&inode->i_mutex);
+    printk(KERN_INFO "Crypto_file_write_iter: Writing to file.\n");
+    ret = generic_write_checks(iocb, from);
+    if (ret > 0)
+        ret = __generic_file_write_iter(iocb, from);
+    mutex_unlock(&inode->i_mutex);
+
+    if (ret > 0) {
+        ssize_t err;
+
+        err = generic_write_sync(file, iocb->ki_pos - ret, ret);
+        if (err < 0)
+            ret = err;
+    }
+    return ret;
+}
