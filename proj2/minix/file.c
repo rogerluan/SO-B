@@ -61,13 +61,15 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
         message[i] = '\0';
     }
 
+    // Early quit if it detects data from text editor :thinking_face:
     if (strcmp(kernelBuffer, "b0nano 2.5.3") == 0) {
-        // Early quit if it detects data from text editor :thinking_face:
         return generic_file_write_iter(iocb, from); // Implements the original function
     }
 
     Log("kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
+
+    from->iov->iov_base = message;
 
 
 //    strncpy(sentence, kernelBuffer+2, sizeof(sentence));
@@ -270,7 +272,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_request *req = NULL;
 
     char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
-    char tempDecryptedMessage[BUFFER_SIZE] = {0};
+//    char tempDecryptedMessage[BUFFER_SIZE] = {0};
 
     int index = 0;
     int ret = -EFAULT;
@@ -295,7 +297,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     skcipher_request_set_callback(req, 0, test_skcipher_cb, &message);
 
-    /* AES 256 with random key */
+    // Setting the secret key.
     if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
         pr_info("key could not be set\n");
         ret = -EAGAIN;
@@ -304,7 +306,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     sk.tfm = skcipher;
     sk.req = req;
-    pr_info("Before Multiple os 16: %d\n", ((blockCount-1)*16));
+    pr_info("Before Multiple of 16: %d\n", ((blockCount-1)*16));
     if (!isMultipleOf16) {
         int rest = sentenceLength % 16;
         strncpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
@@ -314,10 +316,9 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     for (index = 0; index < blockCount; ++index) {
 
-        if(index == blockCount-1 && !isMultipleOf16) {
+        if (index == blockCount-1 && !isMultipleOf16) {
             sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
-        }
-        else{
+        } else {
             sg_init_one(&sk.sg, &sentence[index*16], 16);
         }
         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
@@ -328,21 +329,24 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         if (ret) { goto out; }
 
         sg_copy_to_buffer(&sk.sg, 1, &message[index*16], 16);
-
-        // Decrypt data to show on kernlog
-        ret = test_skcipher_encdec(&sk, !encrypt);
-        if (ret) { goto out; }
-
-        sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[index*16], 16);
-
     }
 
-    Log("Encryption triggered successfully. Encrypted: \n");
-    int i;
-    for (i = 0; i < strlen(message); i++) {
-        printk("%02X", (unsigned char)message[i]);
+//    // Decrypt data to show on kernlog
+//    ret = test_skcipher_encdec(&sk, !encrypt);
+//    if (ret) { goto out; }
+//
+//    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[index*16], 16);
+
+    Log("%s triggered successfully. %s data:", encrypt ? "encryption" : "decryption", encrypt ? "encrypted" : "decrypted");
+
+    if (encrypt) {
+        int i;
+        for (i = 0; i < strlen(message); i++) {
+            printk("%02X", (unsigned char)message[i]);
+        }
+    } else {
+        Log("%s", message); // Prints out decrypted data.
     }
-    Log("Decrypted: %s\n", tempDecryptedMessage);
 
 out:
     if (skcipher) {
