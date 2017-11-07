@@ -26,8 +26,10 @@
 #define BUFFER_SIZE 2048
 #define SENTENCE_BLOCK_SIZE 16
 
+
 //// Parameters
 static char *key = "alpineqwertyuiop";
+int blockCount = 0;
 //module_param(key, charp, 0); // Compatible with kernel 4+
 //MODULE_PARM_DESC(key, "This is the symetric key used to cypher and decypher de data.");
 
@@ -69,7 +71,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     bgmr_cipher(kernelBuffer, 1);
 
 
-    errorCount = copy_to_user(from->iov->iov_base, message, strlen(message));
+    errorCount = copy_to_user(from->iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
@@ -85,7 +87,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     // Cipher
 //    printk(KERN_INFO "CryptoDevice: Cypher\n");
 //    bgmr_cipher(sentence, 1);
-    Log("Writing and ciphering %ld bytes: \"%s\"", (long)len, from->iov->iov_base);
+    Log("Writing and ciphering %ld bytes, %ld blocks: \"%s\"", (long)len, (long)blockCount, from->iov->iov_base);
 
 //    /*
 //     * Assume that `kernel_buf` points to kernel's memory and has type char*.
@@ -277,7 +279,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     int ret = -EFAULT;
     int sentenceLength = strlen(sentence);
     int isMultipleOf16 = (sentenceLength % 16 == 0);
-    int blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
+    blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
     //strncpy(blockSizeSentence, sentence, strlen(sentence));
     pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
 
