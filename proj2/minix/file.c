@@ -27,7 +27,7 @@
 #define SENTENCE_BLOCK_SIZE 16
 
 //// Parameters
-static char *key = "alpine";
+static char *key = "alpineqwertyuiop";
 //module_param(key, charp, 0); // Compatible with kernel 4+
 //MODULE_PARM_DESC(key, "This is the symetric key used to cypher and decypher de data.");
 
@@ -280,7 +280,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     skcipher_request_set_callback(req, 0, test_skcipher_cb, &message);
 
-    /* AES 256 with random key */
     if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
         pr_info("key could not be set\n");
         ret = -EAGAIN;
