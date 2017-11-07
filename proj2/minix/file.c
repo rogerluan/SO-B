@@ -125,33 +125,33 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
  */
 ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
     ssize_t len = iter->iov->iov_len;
-    char kernelBuffer[len];
-    int errorCount = copy_from_user(kernelBuffer, iter->iov->iov_base, len);
-    kernelBuffer[len] = '\0';
-    if (errorCount != 0) {
-        Log("Failed to manipulate data. Error code: %d", errorCount);
-        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
-    }
-
-    int i;
-    for (i = 0; i < BUFFER_SIZE ; i++) {
-        message[i] = '\0';
-    }
-
-    // Early quit if it detects data from text editor :thinking_face:
-    if (strcmp(kernelBuffer, "b0nano 2.5.3") == 0) {
-        return generic_file_write_iter(iocb, iter); // Implements the original function
-    }
-
-    Log("kernel buffer: %s", kernelBuffer);
-    bgmr_cipher(kernelBuffer, 0);
-
-
-    errorCount = copy_to_user(iter->iov->iov_base, message, strlen(message));
-    if (errorCount != 0) {
-        Log("Failed to manipulate data. Error code: %d", errorCount);
-        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
-    }
+//    char kernelBuffer[len];
+//    int errorCount = copy_from_user(kernelBuffer, iter->iov->iov_base, len);
+//    kernelBuffer[len] = '\0';
+//    if (errorCount != 0) {
+//        Log("Failed to manipulate data. Error code: %d", errorCount);
+//        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
+//    }
+//
+//    int i;
+//    for (i = 0; i < BUFFER_SIZE ; i++) {
+//        message[i] = '\0';
+//    }
+//
+//    // Early quit if it detects data from text editor :thinking_face:
+//    if (strcmp(kernelBuffer, "b0nano 2.5.3") == 0) {
+//        return generic_file_write_iter(iocb, iter); // Implements the original function
+//    }
+//
+//    Log("kernel buffer: %s", kernelBuffer);
+//    bgmr_cipher(kernelBuffer, 0);
+//
+//
+//    errorCount = copy_to_user(iter->iov->iov_base, message, strlen(message));
+//    if (errorCount != 0) {
+//        Log("Failed to manipulate data. Error code: %d", errorCount);
+//        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
+//    }
 
     Log("Deciphering and reading %ld bytes: \"%s\"", (long)len, iter->iov->iov_base);
     return generic_file_read_iter(iocb, iter); // Implements the original function
