@@ -21,7 +21,12 @@
 #define BUFFER_SIZE 2048
 #define SENTENCE_BLOCK_SIZE 16
 
-//static char   message[BUFFER_SIZE] = {0};   ///< Memory for the string that is passed from userspace
+//// Parameters
+static char *key = "alpine";
+//module_param(key, charp, 0); // Compatible with kernel 4+
+//MODULE_PARM_DESC(key, "This is the symetric key used to cypher and decypher de data.");
+
+static char message[BUFFER_SIZE] = {0};   ///< Memory for the string that is passed from userspace
 
 //
 static int bgmr_cipher(char *sentence, int encrypt);
