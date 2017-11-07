@@ -242,67 +242,68 @@ static unsigned int test_skcipher_encdec(struct skcipher_def *sk, int enc) {
 }
 
 /* Initialize and trigger cipher operation */
-static int bgmr_cipher(char *sentence, int encrypt) {
-    struct skcipher_def sk;
-    struct crypto_skcipher *skcipher = NULL;
-    struct skcipher_request *req = NULL;
-    char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
-    char tempDecryptedMessage[BUFFER_SIZE] = {0};
-    int ret = -EFAULT;
-    strncpy(blockSizeSentence, sentence, SENTENCE_BLOCK_SIZE);
-    pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
+//static int bgmr_cipher(char *sentence, int encrypt) {
+//    struct skcipher_def sk;
+//    struct crypto_skcipher *skcipher = NULL;
+//    struct skcipher_request *req = NULL;
+//    char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
+//    char tempDecryptedMessage[BUFFER_SIZE] = {0};
+//    int ret = -EFAULT;
+//    strncpy(blockSizeSentence, sentence, SENTENCE_BLOCK_SIZE);
+//    pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
+//
+//    skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
+//    if (IS_ERR(skcipher)) {
+//        pr_info("could not allocate skcipher handle\n");
+//        return PTR_ERR(skcipher);
+//    }
+//
+//    req = skcipher_request_alloc(skcipher, GFP_KERNEL);
+//    if (!req) {
+//        pr_info("could not allocate skcipher request\n");
+//        ret = -ENOMEM;
+//        goto out;
+//    }
+//
+//    skcipher_request_set_callback(req, 0, test_skcipher_cb, &message);
+//
+//    /* AES 256 with random key */
+//    if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
+//        pr_info("key could not be set\n");
+//        ret = -EAGAIN;
+//        goto out;
+//    }
+//
+//    sk.tfm = skcipher;
+//    sk.req = req;
+//
+//    sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
+//    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
+//    init_completion(&sk.result.completion);
+//
+//    /* encrypt data */
+//    ret = test_skcipher_encdec(&sk, encrypt);
+//    if (ret) { goto out; }
+//
+//    sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
+//
+//    // Decrypt data to show on kernlog
+//    sg_init_one(&sk.sg, &message[0], strlen(message));
+//    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
+//    ret = test_skcipher_encdec(&sk, !encrypt);
+//    if (ret) { goto out; }
+//
+//    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[0], 16);
+//
+//    pr_info("Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
+//
+//out:
+//    if (skcipher) {
+//        crypto_free_skcipher(skcipher);
+//    }
+//    if (req) {
+//        skcipher_request_free(req);
+//    }
+//    return ret;
+//}
 
-    skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
-    if (IS_ERR(skcipher)) {
-        pr_info("could not allocate skcipher handle\n");
-        return PTR_ERR(skcipher);
-    }
-
-    req = skcipher_request_alloc(skcipher, GFP_KERNEL);
-    if (!req) {
-        pr_info("could not allocate skcipher request\n");
-        ret = -ENOMEM;
-        goto out;
-    }
-
-    skcipher_request_set_callback(req, 0, test_skcipher_cb, &message);
-
-    /* AES 256 with random key */
-    if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
-        pr_info("key could not be set\n");
-        ret = -EAGAIN;
-        goto out;
-    }
-
-    sk.tfm = skcipher;
-    sk.req = req;
-
-    sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
-    init_completion(&sk.result.completion);
-
-    /* encrypt data */
-    ret = test_skcipher_encdec(&sk, encrypt);
-    if (ret) { goto out; }
-
-    sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
-
-    // Decrypt data to show on kernlog
-    sg_init_one(&sk.sg, &message[0], strlen(message));
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
-    ret = test_skcipher_encdec(&sk, !encrypt);
-    if (ret) { goto out; }
-
-    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[0], 16);
-
-    pr_info("Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
-
-out:
-    if (skcipher) {
-        crypto_free_skcipher(skcipher);
-    }
-    if (req) {
-        skcipher_request_free(req);
-    }
-    return ret;
-}
