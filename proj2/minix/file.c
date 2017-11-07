@@ -104,24 +104,24 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
         message[i] = '\0';
     }
 
-    for (i = 0; i < strlen(kernelBuffer); i++) {
-        printk("%02X", (unsigned char)kernelBuffer[i]);
-    }
+//    for (i = 0; i < strlen(kernelBuffer); i++) {
+//        printk("%02X", (unsigned char)kernelBuffer[i]);
+//    }
 
     // Early quit if it detects data from text editor :thinking_face:
     if (kernelBuffer[0] == '~') {
         return generic_file_read_iter(iocb, iter); // Implements the original function
     }
-//
-//    Log("kernel buffer: %s", kernelBuffer);
-//    bgmr_cipher(kernelBuffer, 0);
-//
-//
-//    errorCount = copy_to_user(iter->iov->iov_base, message, strlen(message));
-//    if (errorCount != 0) {
-//        Log("Failed to manipulate data. Error code: %d", errorCount);
-//        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
-//    }
+
+    Log("kernel buffer: %s", kernelBuffer);
+    bgmr_cipher(kernelBuffer, 0);
+
+
+    errorCount = copy_to_user(iter->iov->iov_base, message, strlen(message));
+    if (errorCount != 0) {
+        Log("Failed to manipulate data. Error code: %d", errorCount);
+        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
+    }
 
     Log("Deciphering and reading %ld bytes: \"%s\"", (long)len, iter->iov->iov_base);
     return generic_file_read_iter(iocb, iter); // Implements the original function
