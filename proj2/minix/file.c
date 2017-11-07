@@ -125,18 +125,23 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
  */
 ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
     ssize_t len = iter->iov->iov_len;
-//    char kernelBuffer[len];
-//    int errorCount = copy_from_user(kernelBuffer, iter->iov->iov_base, len);
-//    kernelBuffer[len] = '\0';
-//    if (errorCount != 0) {
-//        Log("Failed to manipulate data. Error code: %d", errorCount);
-//        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
-//    }
-//
-//    int i;
-//    for (i = 0; i < BUFFER_SIZE ; i++) {
-//        message[i] = '\0';
-//    }
+    char kernelBuffer[len];
+    int errorCount = copy_from_user(kernelBuffer, iter->iov->iov_base, len);
+    kernelBuffer[len] = '\0';
+    if (errorCount != 0) {
+        Log("Failed to manipulate data. Error code: %d", errorCount);
+        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
+    }
+
+    int i;
+    for (i = 0; i < BUFFER_SIZE ; i++) {
+        message[i] = '\0';
+    }
+
+    int i;
+    for (i = 0; i < strlen(kernelBuffer); i++) {
+        printk("%02X", (unsigned char)kernelBuffer[i]);
+    }
 //
 //    // Early quit if it detects data from text editor :thinking_face:
 //    if (strcmp(kernelBuffer, "b0nano 2.5.3") == 0) {
