@@ -339,9 +339,9 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     Log("Encryption triggered successfully. Encrypted: \n");
     int i;
-    for (i = 0; i < strlen(message); i++) {
-        printk("%02X", (unsigned char)message[i]);
-    }
+//    for (i = 0; i < strlen(message); i++) {
+        printk("%X", (unsigned char)message);
+//    }
     Log("Decrypted: %s\n", tempDecryptedMessage);
 
 out:
