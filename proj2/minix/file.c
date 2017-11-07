@@ -70,49 +70,13 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     Log("kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
 
-
+    Log("Outer message strlen: %d", strlen(message));
     errorCount = copy_to_user(from->iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
     }
-
-//    from->iov->iov_base = message;
-//    from->iov->iov_len = strlen(message);
-
-
-//    strncpy(sentence, kernelBuffer+2, sizeof(sentence));
-//    printk(KERN_INFO "SENTENCE COPIED: %s\n", sentence);
-
-    // Cipher
-//    printk(KERN_INFO "CryptoDevice: Cypher\n");
-//    bgmr_cipher(sentence, 1);
     Log("Writing and ciphering %ld bytes, %ld blocks: \"%s\"", (long)len, (long)blockCount, from->iov->iov_base);
-
-//    /*
-//     * Assume that `kernel_buf` points to kernel's memory and has type char*.
-//     */
-//    char __user *user_buf = (__force char __user *)kernel_buf; // Make compiler happy.
-//    mm_segment_t oldfs = get_fs(); // Store current use-space memory segment.
-//    set_fs(KERNEL_DS); // Set user-space memory segment equal to kernel's one.
-//
-//    vfs_read(file, user_buf, count, pos);
-//
-//    set_fs(oldfs); // Restore user-space memory segment after reading.
-
-    //    extern ssize_t vfs_writev(struct file *, const struct iovec __user *, unsigned long, loff_t *, int);
-//    bytesRead = copy_from_iter(kernelBuffer, len, from); // TODO: test
-//    printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Read %ld bytes from %s in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, (long)len, from->iov->iov_base, __PRETTY_FUNCTION__);
-//    if (bytesRead < len) {
-//        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: failed to read all bytes at once in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
-//    } else {
-//        // TODO: Cypher kernelBuffer
-//
-//        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Successfully copied kernel buffer: \"%s\"\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, kernelBuffer);
-//
-////        extern ssize_t vfs_readv(struct file *, const struct iovec __user *, unsigned long, loff_t *, int);
-//
-//    }
     return generic_file_write_iter(iocb, from); // Implements the original function
 }
 
@@ -342,6 +306,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     if (encrypt) {
         int i;
+        Log("Message strlen: %d", strlen(message));
         for (i = 0; i < strlen(message); i++) {
             printk("%02X", (unsigned char)message[i]);
         }
