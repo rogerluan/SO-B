@@ -56,6 +56,10 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
     }
 
+    int i;
+    for (i = 0; i < BUFFER_SIZE ; i++) {
+        message[i] = '\0';
+    }
 
     Log("kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
@@ -330,7 +334,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     Log("Encryption triggered successfully. Encrypted: \n");
     int i;
-    for (i = 0; i < strlen(message); i++){
+    for (i = 0; i < strlen(message); i++) {
         printk("%02X", (unsigned char)message[i]);
     }
     Log("Decrypted: %s\n", tempDecryptedMessage);
