@@ -138,7 +138,6 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
         message[i] = '\0';
     }
 
-    int i;
     for (i = 0; i < strlen(kernelBuffer); i++) {
         printk("%02X", (unsigned char)kernelBuffer[i]);
     }
