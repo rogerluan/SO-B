@@ -69,8 +69,15 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
     Log("kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
 
-    from->iov->iov_base = message;
-    from->iov->iov_len = strlen(message);
+
+    errorCount = copy_to_user(from->iov->iov_base, message, strlen(message));
+    if (errorCount != 0) {
+        printk(KERN_INFO "CryptoDevice: Failed to receive %d characters from the user\n", errorCount);
+        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
+    }
+
+//    from->iov->iov_base = message;
+//    from->iov->iov_len = strlen(message);
 
 
 //    strncpy(sentence, kernelBuffer+2, sizeof(sentence));
