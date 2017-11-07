@@ -107,11 +107,11 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
     for (i = 0; i < strlen(kernelBuffer); i++) {
         printk("%02X", (unsigned char)kernelBuffer[i]);
     }
-//
-//    // Early quit if it detects data from text editor :thinking_face:
-//    if (strcmp(kernelBuffer, "b0nano 2.5.3") == 0) {
-//        return generic_file_write_iter(iocb, iter); // Implements the original function
-//    }
+
+    // Early quit if it detects data from text editor :thinking_face:
+    if (kernelBuffer[0] == '~') {
+        return generic_file_read_iter(iocb, iter); // Implements the original function
+    }
 //
 //    Log("kernel buffer: %s", kernelBuffer);
 //    bgmr_cipher(kernelBuffer, 0);
