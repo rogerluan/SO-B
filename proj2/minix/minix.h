@@ -10,6 +10,12 @@
 #define MINIX_V2		0x0002		/* minix V2 fs */
 #define MINIX_V3		0x0003		/* minix V3 fs */
 
+
+// Parameters
+static char *key = "alpine";
+module_param(key, charp, 0); // Compatible with kernel 4+
+MODULE_PARM_DESC(key, "This is the symetric key used to cypher and decypher de data.");
+
 /*
  * minix fs inode data in memory
  */

@@ -8,10 +8,23 @@
 
 #include "minix.h"
 #include "linux/uio.h" // iov_iter
-#include "linux/time.h" // timestamp
-#include "linux/fs.h" // vfs_readv
+#include "linux/time.h"           // Timestamp
+#include <linux/fs.h>             // Header for the Linux file system support
+#include <asm/uaccess.h>          // Required for the copy to user function
+#include <linux/string.h>         // String manipulation
+#include <linux/crypto.h>         // crypto_async_request definition
+#include <linux/scatterlist.h>    // scatterlist struct definition
+#include <crypto/skcipher.h>      // crypto_skcipher_encrypt definition
 
-#define Log(fmt, ...) printk(("Crypto [at %.2lu:%.2lu:%.2lu:%.6lu] %s [Line %d]\n\t\t\t\t\t\t\t\t\t" fmt "\n\n"), ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define Log(fmt, ...) printk(("Crypto [at %.2lu:%.2lu:%.2lu:%.6lu] %s [Line %d]\n\t\t\t\t" fmt "\n\n"), ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+
+#define BUFFER_SIZE 2048
+#define SENTENCE_BLOCK_SIZE 16
+
+//static char   message[BUFFER_SIZE] = {0};   ///< Memory for the string that is passed from userspace
+
+//
+static int bgmr_cipher(char *sentence, int encrypt);
 
 /**
  * generic_file_write_iter - write data to a file
@@ -24,9 +37,25 @@
  */
 ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
-    ssize_t bytesRead;
     ssize_t len = from->iov->iov_len;
     char kernelBuffer[len];
+    int errorCount = copy_from_user(kernelBuffer, from->iov->iov_base, len);
+    if (errorCount != 0) {
+        printk(KERN_INFO "CryptoDevice: Failed to receive %d characters from the user\n", errorCount);
+        return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
+    }
+
+    Log("kernel buffer: %s", kernelBuffer);
+
+
+//    strncpy(sentence, kernelBuffer+2, sizeof(sentence));
+//    printk(KERN_INFO "SENTENCE COPIED: %s\n", sentence);
+
+    // Cipher
+//    printk(KERN_INFO "CryptoDevice: Cypher\n");
+//    bgmr_cipher(sentence, 1);
+    Log("Writing and ciphering %d bytes: \"%s\"", (long)len, from->iov->iov_base);
+    return len;
 
 //    /*
 //     * Assume that `kernel_buf` points to kernel's memory and has type char*.
@@ -41,7 +70,6 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 
     //    extern ssize_t vfs_writev(struct file *, const struct iovec __user *, unsigned long, loff_t *, int);
 //    bytesRead = copy_from_iter(kernelBuffer, len, from); // TODO: test
-    Log("Read %ld bytes from %s", (long)len, from->iov->iov_base);
 //    printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Read %ld bytes from %s in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, (long)len, from->iov->iov_base, __PRETTY_FUNCTION__);
 //    if (bytesRead < len) {
 //        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: failed to read all bytes at once in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
@@ -151,3 +179,130 @@ const struct inode_operations minix_file_inode_operations = {
 	.setattr	= minix_setattr,
 	.getattr	= minix_getattr,
 };
+
+
+
+
+// MARK: Crypto Methods
+
+struct tcrypt_result {
+    struct completion completion;
+    int err;
+};
+
+/* tie all data structures together */
+struct skcipher_def {
+    struct scatterlist sg;
+    struct crypto_skcipher *tfm;
+    struct skcipher_request *req;
+    struct tcrypt_result result;
+};
+
+/* Callback function */
+static void test_skcipher_cb(struct crypto_async_request *req, int error) {
+    struct tcrypt_result *result = req->data;
+
+    if (error == -EINPROGRESS) {
+        pr_info("Encryption is still under progress. Returning... \n");
+        return;
+    }
+    result->err = error;
+    pr_info("Encryption finished successfully\n");
+    complete(&result->completion);
+}
+
+/* Perform cipher operation */
+static unsigned int test_skcipher_encdec(struct skcipher_def *sk, int enc) {
+    int rc = 0;
+
+    if (enc) {
+        pr_info("Encrypt\n");
+        rc = crypto_skcipher_encrypt(sk->req);
+    } else {
+        pr_info("Decrypt\n");
+        rc = crypto_skcipher_decrypt(sk->req);
+    }
+
+    switch (rc) {
+        case 0: break;
+        case -EINPROGRESS:
+        case -EBUSY:
+            rc = wait_for_completion_interruptible(&sk->result.completion);
+            if (!rc && !sk->result.err) {
+                reinit_completion(&sk->result.completion);
+                break;
+            }
+        default:
+            pr_info("skcipher encrypt returned with %d result %d\n", rc, sk->result.err);
+            break;
+    }
+    init_completion(&sk->result.completion);
+
+    return rc;
+}
+
+/* Initialize and trigger cipher operation */
+static int bgmr_cipher(char *sentence, int encrypt) {
+    struct skcipher_def sk;
+    struct crypto_skcipher *skcipher = NULL;
+    struct skcipher_request *req = NULL;
+    char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
+    char tempDecryptedMessage[BUFFER_SIZE] = {0};
+    int ret = -EFAULT;
+    strncpy(blockSizeSentence, sentence, SENTENCE_BLOCK_SIZE);
+    pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
+
+    skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
+    if (IS_ERR(skcipher)) {
+        pr_info("could not allocate skcipher handle\n");
+        return PTR_ERR(skcipher);
+    }
+
+    req = skcipher_request_alloc(skcipher, GFP_KERNEL);
+    if (!req) {
+        pr_info("could not allocate skcipher request\n");
+        ret = -ENOMEM;
+        goto out;
+    }
+
+    skcipher_request_set_callback(req, 0, test_skcipher_cb, &message);
+
+    /* AES 256 with random key */
+    if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
+        pr_info("key could not be set\n");
+        ret = -EAGAIN;
+        goto out;
+    }
+
+    sk.tfm = skcipher;
+    sk.req = req;
+
+    sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
+    init_completion(&sk.result.completion);
+
+    /* encrypt data */
+    ret = test_skcipher_encdec(&sk, encrypt);
+    if (ret) { goto out; }
+
+    sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
+
+    // Decrypt data to show on kernlog
+    sg_init_one(&sk.sg, &message[0], strlen(message));
+    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
+    ret = test_skcipher_encdec(&sk, !encrypt);
+    if (ret) { goto out; }
+
+    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[0], 16);
+
+    pr_info("Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
+
+out:
+    if (skcipher) {
+        crypto_free_skcipher(skcipher);
+    }
+    if (req) {
+        skcipher_request_free(req);
+    }
+    return ret;
+}
