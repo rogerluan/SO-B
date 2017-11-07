@@ -17,10 +17,10 @@
 #include <crypto/skcipher.h>      // crypto_skcipher_encrypt definition
 
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
 #define Log(fmt, ...) printk(("Crypto [at %.2lu:%.2lu:%.2lu:%.6lu] %s [Line %d]\n\t\t\t\t   " fmt "\n\n"), ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
-#pragma clang pop
+#pragma GCC pop
 
 
 #define BUFFER_SIZE 2048
