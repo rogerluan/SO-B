@@ -11,6 +11,8 @@
 #include "linux/time.h" // timestamp
 #include "linux/fs.h" // vfs_readv
 
+#define Log(fmt, ...) printk(("Crypto [at %.2lu:%.2lu:%.2lu:%.6lu] %s [Line %d]\n\t\t\t\t\t\t\t\t\t" fmt "\n\n"), ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __PRETTY_FUNCTION__, __LINE__), ##__VA_ARGS__)
+
 /**
  * generic_file_write_iter - write data to a file
  * @iocb:    IO state structure
@@ -26,11 +28,21 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
     ssize_t len = from->iov->iov_len;
     char kernelBuffer[len];
 
-    printk(KERN_INFO "Crypto: Customised print at %s\n", __PRETTY_FUNCTION__);
+//    /*
+//     * Assume that `kernel_buf` points to kernel's memory and has type char*.
+//     */
+//    char __user *user_buf = (__force char __user *)kernel_buf; // Make compiler happy.
+//    mm_segment_t oldfs = get_fs(); // Store current use-space memory segment.
+//    set_fs(KERNEL_DS); // Set user-space memory segment equal to kernel's one.
+//
+//    vfs_read(file, user_buf, count, pos);
+//
+//    set_fs(oldfs); // Restore user-space memory segment after reading.
 
     //    extern ssize_t vfs_writev(struct file *, const struct iovec __user *, unsigned long, loff_t *, int);
 //    bytesRead = copy_from_iter(kernelBuffer, len, from); // TODO: test
-    printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Read %ld bytes from %s in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, (long)len, from->iov->iov_base, __PRETTY_FUNCTION__);
+    Log("Read %ld bytes from %s", (long)len, from->iov->iov_base);
+//    printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: Read %ld bytes from %s in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, (long)len, from->iov->iov_base, __PRETTY_FUNCTION__);
 //    if (bytesRead < len) {
 //        printk(KERN_INFO "Crypto [%.2lu:%.2lu:%.2lu:%.6lu]: failed to read all bytes at once in %s\n", ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __FUNCTION__);
 //    } else {
