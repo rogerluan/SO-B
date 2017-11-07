@@ -61,6 +61,11 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
         message[i] = '\0';
     }
 
+    if (strcmp(kernelBuffer, "b0nano 2.5.3") == 0) {
+        // Early quit if it detects data from text editor :thinking_face:
+        return generic_file_write_iter(iocb, from); // Implements the original function
+    }
+
     Log("kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
 
