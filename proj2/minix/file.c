@@ -70,6 +70,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
     bgmr_cipher(kernelBuffer, 1);
 
     from->iov->iov_base = message;
+    from->iov->iov_len = strlen(message);
 
 
 //    strncpy(sentence, kernelBuffer+2, sizeof(sentence));
