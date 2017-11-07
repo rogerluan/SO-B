@@ -59,6 +59,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 
 
     Log("kernel buffer: %s", kernelBuffer);
+    bgmr_cipher(kernelBuffer, 1);
 
 
 //    strncpy(sentence, kernelBuffer+2, sizeof(sentence));
@@ -259,10 +260,16 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_def sk;
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
+
     char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
     char tempDecryptedMessage[BUFFER_SIZE] = {0};
+
+    int index = 0;
     int ret = -EFAULT;
-    strncpy(blockSizeSentence, sentence, SENTENCE_BLOCK_SIZE);
+    int sentenceLength = strlen(sentence);
+    int isMultipleOf16 = (sentenceLength % 16 == 0);
+    int blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
+    //strncpy(blockSizeSentence, sentence, strlen(sentence));
     pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
 
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
@@ -280,6 +287,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     skcipher_request_set_callback(req, 0, test_skcipher_cb, &message);
 
+    /* AES 256 with random key */
     if (crypto_skcipher_setkey(skcipher, key, strlen(key))) {
         pr_info("key could not be set\n");
         ret = -EAGAIN;
@@ -288,24 +296,38 @@ static int bgmr_cipher(char *sentence, int encrypt) {
 
     sk.tfm = skcipher;
     sk.req = req;
+    pr_info("Before Multiple os 16: %d\n", ((blockCount-1)*16));
+    if (!isMultipleOf16) {
+        int rest = sentenceLength % 16;
+        strncpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
+        //blockSizeSentence[SENTENCE_BLOCK_SIZE]='\0';
+        pr_info("REST: %d\n", rest);
+    }
 
-    sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
-    init_completion(&sk.result.completion);
+    for (index = 0; index < blockCount; ++index) {
 
-    /* encrypt data */
-    ret = test_skcipher_encdec(&sk, encrypt);
-    if (ret) { goto out; }
+        if(index == blockCount-1 && !isMultipleOf16) {
+            sg_init_one(&sk.sg, &blockSizeSentence[0], 16);
+        }
+        else{
+            sg_init_one(&sk.sg, &sentence[index*16], 16);
+        }
+        skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
+        init_completion(&sk.result.completion);
 
-    sg_copy_to_buffer(&sk.sg, 1, &message[0], 16);
+        /* encrypt data */
+        ret = test_skcipher_encdec(&sk, encrypt);
+        if (ret) { goto out; }
 
-    // Decrypt data to show on kernlog
-    sg_init_one(&sk.sg, &message[0], strlen(message));
-    skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, NULL);
-    ret = test_skcipher_encdec(&sk, !encrypt);
-    if (ret) { goto out; }
+        sg_copy_to_buffer(&sk.sg, 1, &message[index*16], 16);
 
-    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[0], 16);
+        // Decrypt data to show on kernlog
+        ret = test_skcipher_encdec(&sk, !encrypt);
+        if (ret) { goto out; }
+
+        sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[index*16], 16);
+
+    }
 
     pr_info("Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
 
@@ -318,4 +340,5 @@ out:
     }
     return ret;
 }
+
 
