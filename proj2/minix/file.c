@@ -87,7 +87,6 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 //    printk(KERN_INFO "CryptoDevice: Cypher\n");
 //    bgmr_cipher(sentence, 1);
     Log("Writing and ciphering %ld bytes: \"%s\"", (long)len, from->iov->iov_base);
-    return len;
 
 //    /*
 //     * Assume that `kernel_buf` points to kernel's memory and has type char*.
