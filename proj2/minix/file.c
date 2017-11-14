@@ -20,7 +20,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
 #define Log(fmt, ...) printk(("Crypto [at %.2lu:%.2lu:%.2lu:%.6lu] %s [Line %d]\n\t\t\t\t   " fmt "\n\n"), ((CURRENT_TIME.tv_sec / 3600) % (24))-2, (CURRENT_TIME.tv_sec / 60) % (60), CURRENT_TIME.tv_sec % 60, CURRENT_TIME.tv_nsec / 1000, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
-#pragma GCC pop
+#pragma GCC diagnostic pop
 
 
 #define BUFFER_SIZE 2048
@@ -50,8 +50,10 @@ static int bgmr_cipher(char *sentence, int encrypt);
 ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     ssize_t len = from->iov->iov_len;
     char kernelBuffer[len];
-    int errorCount = copy_from_user(kernelBuffer, from->iov->iov_base, len);
+    int errorCount = 0;
     int i;
+
+    errorCount = copy_from_user(kernelBuffer, from->iov->iov_base, len);
     kernelBuffer[len] = '\0';
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
@@ -69,16 +71,14 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
         return generic_file_write_iter(iocb, from); // Implements the original function
     }
 
+
+
     Log("kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
 
     Log("Outer message strlen: %d", strlen(message));
-
-    struct iovec *iov = kmalloc(sizeof(struct iovec), GFP_KERNEL);
-    memcpy(iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
-    iov->iov_len = blockCount*SENTENCE_BLOCK_SIZE;
-
-    errorCount = copy_to_user(from->iov, iov, sizeof(struct iovec));
+    errorCount = copy_to_user(from->iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
+    
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
@@ -99,7 +99,10 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
 ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
     ssize_t len = iter->iov->iov_len;
     char kernelBuffer[len];
-    int errorCount = copy_from_user(kernelBuffer, iter->iov->iov_base, len);
+    int i;
+    int errorCount = 0;
+
+    errorCount = copy_from_user(kernelBuffer, iter->iov->iov_base, len);
     kernelBuffer[len] = '\0';
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
@@ -108,7 +111,6 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
 
     Log("Status: %d", iocb->ki_flags);
 
-    int i;
     for (i = 0; i < BUFFER_SIZE ; i++) {
         message[i] = '\0';
     }
@@ -251,6 +253,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     int index = 0;
     int ret = -EFAULT;
     int sentenceLength = strlen(sentence);
+    int isMultipleOf16 = 0;
 
     int i;
     for (i = 0; i < SENTENCE_BLOCK_SIZE ; ++i) {
@@ -258,7 +261,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     }
 
 
-    int isMultipleOf16 = (sentenceLength % 16 == 0);
+    isMultipleOf16 = (sentenceLength % 16 == 0);
     blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
     //strncpy(blockSizeSentence, sentence, strlen(sentence)); // this should be commented out
     pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
