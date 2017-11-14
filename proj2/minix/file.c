@@ -50,11 +50,7 @@ static int bgmr_cipher(char *sentence, int encrypt);
 ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     ssize_t len = from->iov->iov_len;
     char kernelBuffer[len];
-    struct iovec *kernelIov = NULL;
-    int errorCount = copy_from_user(kernelIov, from->iov, sizeof(from->iov));
-
-//    int errorCount = copy_from_user(kernelBuffer, from->iov->iov_base, len);
-    memcpy(kernelBuffer, kernelIov->iov_base, kernelIov->iov_len);
+    int errorCount = copy_from_user(kernelBuffer, from->iov->iov_base, len);
     int i;
     kernelBuffer[len] = '\0';
     if (errorCount != 0) {
@@ -78,10 +74,11 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
 
     Log("Outer message strlen: %d", strlen(message));
 
-    memcpy(kernelIov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
-    kernelIov->iov_len = blockCount*SENTENCE_BLOCK_SIZE;
+    struct iovec *iov = kmalloc(sizeof(struct iovec), GFP_KERNEL);
+    memcpy(iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
+    iov->iov_len = blockCount*SENTENCE_BLOCK_SIZE;
 
-    errorCount = copy_to_user(from->iov, kernelIov, sizeof(kernelIov));
+    errorCount = copy_to_user(from->iov, iov, sizeof(struct iovec));
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
