@@ -247,9 +247,6 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     int ret = -EFAULT;
     int sentenceLength = strlen(sentence);
 
-    if (!encrypt) {
-        Log("Sentence length of decrypted data: %ld", (long)sentenceLength);
-    }
 
     int isMultipleOf16 = (sentenceLength % 16 == 0);
     blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
@@ -283,7 +280,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     pr_info("Before Multiple of 16: %d\n", ((blockCount-1)*16));
     if (!isMultipleOf16) {
         int rest = sentenceLength % 16;
-        strncpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
+        memcpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
 //        blockSizeSentence[SENTENCE_BLOCK_SIZE-1] = '\0';
         pr_info("REST: %d\n", rest);
     }
