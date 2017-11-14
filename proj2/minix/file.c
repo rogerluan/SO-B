@@ -74,8 +74,11 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
 
     Log("Outer message strlen: %d", strlen(message));
 
-    copy_to_user(from->iov->iov_len, blockCount*SENTENCE_BLOCK_SIZE, sizeof(from->iov->iov_len));
-    errorCount = copy_to_user(from->iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
+    struct iovec *iov;
+    memcpy(iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
+    iov->iov_len = blockCount*SENTENCE_BLOCK_SIZE;
+
+    errorCount = copy_to_user(from->iov, iov, sizeof(iov));
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
