@@ -129,7 +129,7 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
     }
 
-    Log("Deciphering and reading %ld bytes: \"%s\"", (long)len, iter->iov->iov_base);
+    Log("Deciphering and reading %ld bytes: \"%s\"", (long)strlen(iter->iov->iov_base), iter->iov->iov_base);
     return generic_file_read_iter(iocb, iter); // Implements the original function
 }
 
