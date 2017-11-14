@@ -1,3 +1,13 @@
+/**
+ * @file minix.h
+ * @author BRUNO AUGUSTO PEDROSO       12662136
+ GIULIANA SALGADO ALEPROTI   12120457
+ MATHEUS DE PAULA NICOLAU    12085957
+ ROGER OBA                   12048534
+ * @date November 14th, 2017
+ * @version 1.0
+ */
+
 #ifndef FS_MINIX_H
 #define FS_MINIX_H
 

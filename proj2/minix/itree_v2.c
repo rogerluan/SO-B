@@ -1,3 +1,13 @@
+/**
+ * @file itree_v2.c
+ * @author BRUNO AUGUSTO PEDROSO       12662136
+ GIULIANA SALGADO ALEPROTI   12120457
+ MATHEUS DE PAULA NICOLAU    12085957
+ ROGER OBA                   12048534
+ * @date November 14th, 2017
+ * @version 1.0
+ */
+
 #include <linux/buffer_head.h>
 #include "minix.h"
 

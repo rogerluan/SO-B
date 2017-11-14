@@ -1,3 +1,13 @@
+/**
+ * @file file.c
+ * @author BRUNO AUGUSTO PEDROSO       12662136
+           GIULIANA SALGADO ALEPROTI   12120457
+           MATHEUS DE PAULA NICOLAU    12085957
+           ROGER OBA                   12048534
+ * @date November 14th, 2017
+ * @version 1.0
+ */
+
 /*
  *  linux/fs/minix/file.c
  *
@@ -139,8 +149,8 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
  */
 const struct file_operations minix_file_operations = {
 	.llseek		= generic_file_llseek,
-	.read_iter	= crypto_file_read_iter, // Customised decyphed file read
-	.write_iter	= crypto_file_write_iter, // Customised cyphed file write
+	.read_iter	= crypto_file_read_iter, // Customised deciphered file read
+	.write_iter	= crypto_file_write_iter, // Customised ciphered file write
 	.mmap		= generic_file_mmap,
 	.fsync		= generic_file_fsync,
 	.splice_read	= generic_file_splice_read,
