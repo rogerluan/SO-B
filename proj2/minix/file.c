@@ -51,6 +51,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     ssize_t len = from->iov->iov_len;
     char kernelBuffer[len];
     int errorCount = copy_from_user(kernelBuffer, from->iov->iov_base, len);
+    int i;
     kernelBuffer[len] = '\0';
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
@@ -59,7 +60,11 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
 
     Log("Status: %d", iocb->ki_flags);
 
-    int i;
+
+    for (i = 0; i < strlen(kernelBuffer); i++) {
+        printk("Income: %02X", (unsigned char)kernelBuffer[i]);
+    }
+
     for (i = 0; i < BUFFER_SIZE ; i++) {
         message[i] = '\0';
     }
@@ -68,6 +73,8 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     if (strcmp(kernelBuffer, "b0nano 2.5.3") == 0) {
         return generic_file_write_iter(iocb, from); // Implements the original function
     }
+
+    
 
     Log("kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
