@@ -1,3 +1,8 @@
+# BRUNO AUGUSTO PEDROSO       12662136
+# GIULIANA SALGADO ALEPROTI   12120457
+# MATHEUS DE PAULA NICOLAU    12085957
+# ROGER OBA                   12048534
+
 #
 # Makefile for the Linux minix filesystem routines.
 #
