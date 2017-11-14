@@ -74,7 +74,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
 
     Log("Outer message strlen: %d", strlen(message));
 
-    struct iovec *iov;
+    struct iovec *iov = NULL;
     memcpy(iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
     iov->iov_len = blockCount*SENTENCE_BLOCK_SIZE;
 
