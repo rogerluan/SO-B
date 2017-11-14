@@ -240,12 +240,17 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
 
-    char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {'R'};
-    char tempDecryptedMessage[BUFFER_SIZE] = {'R'};
+    char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
+    char tempDecryptedMessage[BUFFER_SIZE] = {0};
 
     int index = 0;
     int ret = -EFAULT;
     int sentenceLength = strlen(sentence);
+
+    int i;
+    for (i = 0; i < SENTENCE_BLOCK_SIZE ; ++i) {
+        blockSizeSentence[i] = '\u00A0';
+    }
 
 
     int isMultipleOf16 = (sentenceLength % 16 == 0);
