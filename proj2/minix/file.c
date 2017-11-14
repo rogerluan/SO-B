@@ -59,7 +59,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
     }
 
-    Log("Status: %d", iocb->ki_flags);
+//    Log("Status: %d", iocb->ki_flags);
 
     for (i = 0; i < BUFFER_SIZE ; i++) {
         message[i] = '\0';
@@ -104,7 +104,7 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
     }
 
-    Log("Status: %d", iocb->ki_flags);
+//    Log("Status: %d", iocb->ki_flags);
 
     for (i = 0; i < BUFFER_SIZE ; i++) {
         message[i] = '\0';
