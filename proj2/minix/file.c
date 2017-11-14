@@ -60,11 +60,6 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
 
     Log("Status: %d", iocb->ki_flags);
 
-
-    for (i = 0; i < strlen(kernelBuffer); i++) {
-        printk("Income: %02X", (unsigned char)kernelBuffer[i]);
-    }
-
     for (i = 0; i < BUFFER_SIZE ; i++) {
         message[i] = '\0';
     }
@@ -73,8 +68,6 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     if (strcmp(kernelBuffer, "b0nano 2.5.3") == 0) {
         return generic_file_write_iter(iocb, from); // Implements the original function
     }
-
-    
 
     Log("kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
@@ -253,6 +246,11 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     int index = 0;
     int ret = -EFAULT;
     int sentenceLength = strlen(sentence);
+
+    if (!encrypt) {
+        Log("Sentence length of decrypted data: %ld", (long)sentenceLength);
+    }
+
     int isMultipleOf16 = (sentenceLength % 16 == 0);
     blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
     //strncpy(blockSizeSentence, sentence, strlen(sentence));
