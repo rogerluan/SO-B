@@ -115,7 +115,7 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
 //    }
 
     // Early quit if it detects data from text editor :thinking_face:
-    if (kernelBuffer[0] == '~') {
+    if (kernelBuffer[0] == '~' || strlen(kernelBuffer) == 0) {
         return generic_file_read_iter(iocb, iter); // Implements the original function
     }
 
@@ -341,3 +341,36 @@ out:
 }
 
 #pragma GCC diagnostic pop
+
+[ 1337.608662] CF
+[ 1337.608662] FB
+[ 1337.608663] E4
+[ 1337.608663] 55
+[ 1337.608663] 3E
+[ 1337.608663] 12
+[ 1337.608664] 58
+[ 1337.608664] 89
+[ 1337.608664] 3A
+[ 1337.608665] 4D
+[ 1337.608665] EC
+[ 1337.608665] AC
+[ 1337.608666] 35
+[ 1337.608666] 6F
+[ 1337.608666] 85
+[ 1337.608667] 88
+[ 1337.608667] 34
+[ 1337.608667] A1
+[ 1337.608667] 57
+[ 1337.608668] 43
+[ 1337.608668] B3
+[ 1337.608668] DD
+[ 1337.608669] 03
+[ 1337.608669] 01
+[ 1337.608669] 24
+[ 1337.608670] 11
+[ 1337.608670] CD
+[ 1337.608670] 1A
+[ 1337.608671] C3
+[ 1337.608671] 4A
+[ 1337.608671] F5
+[ 1337.608671] 58
