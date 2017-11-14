@@ -70,12 +70,8 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
         return generic_file_write_iter(iocb, from); // Implements the original function
     }
 
-
-
-    Log("kernel buffer: %s", kernelBuffer);
+    Log("Writing kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 1);
-
-    Log("Outer message strlen: %d", strlen(message));
     errorCount = copy_to_user(from->iov->iov_base, message, blockCount*SENTENCE_BLOCK_SIZE);
     
     if (errorCount != 0) {
@@ -123,7 +119,7 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
         return generic_file_read_iter(iocb, iter); // Implements the original function
     }
 
-    Log("kernel buffer: %s", kernelBuffer);
+    Log("Reading kernel buffer: %s", kernelBuffer);
     bgmr_cipher(kernelBuffer, 0);
 
 
@@ -215,10 +211,10 @@ static unsigned int test_skcipher_encdec(struct skcipher_def *sk, int enc) {
     int rc = 0;
 
     if (enc) {
-        pr_info("Encrypt\n");
+//        pr_info("Encrypt\n");
         rc = crypto_skcipher_encrypt(sk->req);
     } else {
-        pr_info("Decrypt\n");
+//        pr_info("Decrypt\n");
         rc = crypto_skcipher_decrypt(sk->req);
     }
 
@@ -259,11 +255,10 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         blockSizeSentence[i] = '\u00A0';
     }
 
-
     isMultipleOf16 = (sentenceLength % 16 == 0);
     blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
     //strncpy(blockSizeSentence, sentence, strlen(sentence)); // this should be commented out
-    pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
+//    pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
 
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
     if (IS_ERR(skcipher)) {
@@ -322,17 +317,17 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     }
 
     Log("%s triggered successfully. %s data:", encrypt ? "encryption" : "decryption", encrypt ? "encrypted" : "decrypted");
-    Log("TEST: Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
+//    Log("TEST: Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
 
 
     if (encrypt) {
         int i;
-        Log("Message strlen: %d", strlen(message));
+//        Log("Message strlen: %d", strlen(message));
         for (i = 0; i < strlen(message); i++) {
             printk("%02X", (unsigned char)message[i]);
         }
     } else {
-        Log("%s", message); // Prints out decrypted data.
+        Log("Our function is currently decrypting data. Decrypted: %s", message); // Prints out decrypted data.
     }
 
 out:
