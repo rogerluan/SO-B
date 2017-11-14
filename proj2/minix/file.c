@@ -48,10 +48,10 @@ static int bgmr_cipher(char *sentence, int encrypt);
  * and acquires i_mutex as needed.
  */
 ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
-    ssize_t len = from->iov->iov_len-1;
+    ssize_t len = from->iov->iov_len;
     char kernelBuffer[len];
     int errorCount = copy_from_user(kernelBuffer, from->iov->iov_base, len);
-//    kernelBuffer[len] = '\0';
+    kernelBuffer[len] = '\0';
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
         return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
@@ -279,7 +279,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     if (!isMultipleOf16) {
         int rest = sentenceLength % 16;
         strncpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
-        //blockSizeSentence[SENTENCE_BLOCK_SIZE]='\0';
+        blockSizeSentence[SENTENCE_BLOCK_SIZE] = '\0';
         pr_info("REST: %d\n", rest);
     }
 
