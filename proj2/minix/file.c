@@ -279,7 +279,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     if (!isMultipleOf16) {
         int rest = sentenceLength % 16;
         strncpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
-        blockSizeSentence[SENTENCE_BLOCK_SIZE] = '\0';
+        blockSizeSentence[SENTENCE_BLOCK_SIZE-1] = '\0';
         pr_info("REST: %d\n", rest);
     }
 
