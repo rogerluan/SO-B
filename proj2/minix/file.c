@@ -240,7 +240,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
 
-    char blockSizeSentence[BUFFER_SIZE] = {0};
+    char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
     char tempDecryptedMessage[BUFFER_SIZE] = {0};
 
     int index = 0;
@@ -280,7 +280,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     pr_info("Before Multiple of 16: %d\n", ((blockCount-1)*16));
     if (!isMultipleOf16) {
         int rest = sentenceLength % 16;
-        memcpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
+        strncpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
 //        blockSizeSentence[SENTENCE_BLOCK_SIZE-1] = '\0'; // this should be commented out
         pr_info("REST: %d\n", rest);
     }
