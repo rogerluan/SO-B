@@ -51,6 +51,7 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
     ssize_t len = from->iov->iov_len;
     char kernelBuffer[len];
     int errorCount = copy_from_user(kernelBuffer, from->iov->iov_base, len);
+    int i;
     kernelBuffer[len] = '\0';
     if (errorCount != 0) {
         Log("Failed to manipulate data. Error code: %d", errorCount);
@@ -59,7 +60,6 @@ ssize_t crypto_file_write_iter(struct kiocb *iocb, struct iov_iter *from) {
 
     Log("Status: %d", iocb->ki_flags);
 
-    int i;
     for (i = 0; i < BUFFER_SIZE ; i++) {
         message[i] = '\0';
     }
@@ -241,14 +241,21 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct skcipher_request *req = NULL;
 
     char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
-//    char tempDecryptedMessage[BUFFER_SIZE] = {0};
+    char tempDecryptedMessage[BUFFER_SIZE] = {0};
 
     int index = 0;
     int ret = -EFAULT;
     int sentenceLength = strlen(sentence);
+
+    int i;
+    for (i = 0; i < SENTENCE_BLOCK_SIZE ; ++i) {
+        blockSizeSentence[i] = '\u00A0';
+    }
+
+
     int isMultipleOf16 = (sentenceLength % 16 == 0);
     blockCount = isMultipleOf16 ? sentenceLength/16 : (int)sentenceLength/16 + 1; // Sentence length is always >= 0
-    //strncpy(blockSizeSentence, sentence, strlen(sentence));
+    //strncpy(blockSizeSentence, sentence, strlen(sentence)); // this should be commented out
     pr_info("Sentece in CRYPT %s\n", blockSizeSentence);
 
     skcipher = crypto_alloc_skcipher("ecb(aes)", 0, 0);
@@ -279,7 +286,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     if (!isMultipleOf16) {
         int rest = sentenceLength % 16;
         strncpy(blockSizeSentence, sentence + ((blockCount-1)*16), rest);
-        blockSizeSentence[SENTENCE_BLOCK_SIZE-1] = '\0';
+//        blockSizeSentence[SENTENCE_BLOCK_SIZE-1] = '\0'; // this should be commented out
         pr_info("REST: %d\n", rest);
     }
 
@@ -298,15 +305,18 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         if (ret) { goto out; }
 
         sg_copy_to_buffer(&sk.sg, 1, &message[index*16], 16);
+
+
+        // Decrypt data to show on kernlog
+        ret = test_skcipher_encdec(&sk, !encrypt);
+        if (ret) { goto out; }
+
+        sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[index*16], 16);
     }
 
-//    // Decrypt data to show on kernlog
-//    ret = test_skcipher_encdec(&sk, !encrypt);
-//    if (ret) { goto out; }
-//
-//    sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[index*16], 16);
-
     Log("%s triggered successfully. %s data:", encrypt ? "encryption" : "decryption", encrypt ? "encrypted" : "decrypted");
+    Log("TEST: Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
+
 
     if (encrypt) {
         int i;
