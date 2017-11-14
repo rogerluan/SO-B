@@ -240,7 +240,7 @@ static int bgmr_cipher(char *sentence, int encrypt) {
     struct crypto_skcipher *skcipher = NULL;
     struct skcipher_request *req = NULL;
 
-    char blockSizeSentence[SENTENCE_BLOCK_SIZE] = {0};
+    char blockSizeSentence[BUFFER_SIZE] = {0};
     char tempDecryptedMessage[BUFFER_SIZE] = {0};
 
     int index = 0;
