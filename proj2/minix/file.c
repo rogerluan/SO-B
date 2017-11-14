@@ -316,16 +316,16 @@ static int bgmr_cipher(char *sentence, int encrypt) {
         sg_copy_to_buffer(&sk.sg, 1, &tempDecryptedMessage[index*16], 16);
     }
 
-    Log("%s triggered successfully. %s data:", encrypt ? "encryption" : "decryption", encrypt ? "encrypted" : "decrypted");
+//    Log("%s triggered successfully. %s data:", encrypt ? "encryption" : "decryption", encrypt ? "encrypted" : "decrypted");
 //    Log("TEST: Encryption triggered successfully. Encrypted: %s\nEncryption triggered successfully. Decrypted: %s\n", message, tempDecryptedMessage);
 
 
     if (encrypt) {
         int i;
 //        Log("Message strlen: %d", strlen(message));
-        for (i = 0; i < strlen(message); i++) {
-            printk("%02X", (unsigned char)message[i]);
-        }
+//        for (i = 0; i < strlen(message); i++) {
+//            printk("%02X", (unsigned char)message[i]);
+//        }
     } else {
         Log("Our function is currently decrypting data. Decrypted: %s", message); // Prints out decrypted data.
     }
