@@ -115,7 +115,7 @@ ssize_t crypto_file_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
 //    }
 
     // Early quit if it detects data from text editor :thinking_face:
-    if (kernelBuffer[0] == '~' || strlen(kernelBuffer) == 0) {
+    if (kernelBuffer[0] == '~') {
         return generic_file_read_iter(iocb, iter); // Implements the original function
     }
 
